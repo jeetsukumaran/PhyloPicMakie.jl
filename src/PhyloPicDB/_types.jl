@@ -179,6 +179,7 @@ _largest_file_href(files)  # → "/img/128x128.png"
 ```
 """
 function _largest_file_href(files_arr)::Union{String, Missing}
+    files_arr isa AbstractArray || return missing
     isempty(files_arr) && return missing
     best = argmax(f -> _parse_img_width(get(f, :sizes, "0x0")), files_arr)
     href = get(best, :href, missing)

@@ -56,7 +56,9 @@ function fetch_current_build(; force::Bool = false)::Int
         if isnothing(cached) || expired || force
             resp = phylopic_get(PHYLOPIC_BASE_URL)
             obj = JSON3.read(resp.body)
-            b = Int(obj.build)
+            b_raw = obj.build
+            b_raw isa Integer || error("fetch_current_build: unexpected build type $(typeof(b_raw))")
+            b = Int(b_raw)
             _BUILD_CACHE[] = b
             _BUILD_TIME[] = time()
             return b

@@ -82,7 +82,8 @@ function _fetch_images_page(
         resp = phylopic_get(url)
         obj = JSON3.read(resp.body)
         n_pages = try
-            Int(obj.totalPages)
+            tp = obj.totalPages
+            tp isa Integer ? Int(tp) : 1
         catch
             1
         end
