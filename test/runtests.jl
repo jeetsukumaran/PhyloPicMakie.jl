@@ -11,6 +11,8 @@
 using Test
 using CairoMakie
 using PhyloPicMakie
+using Aqua
+using JET
 
 # PhyloPicDB is a hard dep of PhyloPicMakie and accessible as a nested module.
 const PhyloPicDB = PhyloPicMakie.PhyloPicDB

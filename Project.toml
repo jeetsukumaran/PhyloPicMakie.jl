@@ -15,18 +15,24 @@ Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 DataCaches = {url = "https://github.com/JuliaData/DataCaches.jl.git"}
 
 [compat]
+Aqua = "0.8"
 DataCaches = "0.3"
+Documenter = "1"
 Downloads = "1.6"
 FileIO = "1.18"
 HTTP = "1.11"
+JET = "0.11.3"
 JSON3 = "1.14"
 Makie = "0.24.9"
+Test = "1"
 julia = "1.11"
 
 [extras]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
-JET = "c3a54625-cd67-489e-a8e7-0a5f8cef8c31"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+JET = "c3a54625-cd67-489e-a8e7-0a5a0ff4e31b"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "Aqua", "JET"]
+docs = ["Documenter"]
+test = ["Test", "Aqua"]
