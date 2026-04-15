@@ -101,7 +101,6 @@ poetry.lock
 
 # Julia package development
 Manifest.toml
-**/Manifest*.toml
 
 # Julia compiled packages (cache)
 .julia/compiled/
