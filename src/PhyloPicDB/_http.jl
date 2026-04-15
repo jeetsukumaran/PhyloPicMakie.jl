@@ -46,12 +46,10 @@ function phylopic_get(
         retries::Int = 3,
         readtimeout::Int = 30,
     )::HTTP.Response
-    last_err = nothing
     for attempt in 1:retries
         try
             return HTTP.get(url; readtimeout = readtimeout)
         catch err
-            last_err = err
             # Client errors are definitive — retrying won't help.
             if err isa HTTP.Exceptions.StatusError && err.status in (400, 404, 410)
                 rethrow(err)
@@ -60,5 +58,5 @@ function phylopic_get(
             sleep(0.5 * attempt)
         end
     end
-    throw(last_err)
+    error("phylopic_get: unreachable (retries = $retries)")
 end

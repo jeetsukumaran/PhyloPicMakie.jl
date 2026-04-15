@@ -51,14 +51,17 @@ build3 = fetch_current_build(; force = true)  # forces a new request
 """
 function fetch_current_build(; force::Bool = false)::Int
     return lock(_BUILD_LOCK) do
+        cached = _BUILD_CACHE[]
         expired = (time() - _BUILD_TIME[]) > BUILD_TTL
-        if isnothing(_BUILD_CACHE[]) || expired || force
+        if isnothing(cached) || expired || force
             resp = phylopic_get(PHYLOPIC_BASE_URL)
             obj = JSON3.read(resp.body)
-            _BUILD_CACHE[] = Int(obj.build)
+            b = Int(obj.build)
+            _BUILD_CACHE[] = b
             _BUILD_TIME[] = time()
+            return b
         end
-        return _BUILD_CACHE[]
+        return cached::Int
     end
 end
 

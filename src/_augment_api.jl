@@ -405,7 +405,10 @@ function augment_phylopic!(
     xs = _extract_column(table, x)
     ys = _extract_column(table, y)
     uuids = isnothing(node_uuid) ? nothing : _extract_column(table, node_uuid)
-    return augment_phylopic!(ax, xs, ys; node_uuid = uuids, glyph = glyph, kwargs...)
+    return augment_phylopic!(
+        ax, xs::AbstractVector{<:Real}, ys::AbstractVector{<:Real};
+        node_uuid = uuids, glyph = glyph, kwargs...,
+    )
 end
 
 """
@@ -497,7 +500,13 @@ function augment_phylopic_ranges!(
     xe = _extract_column(table, xstop)
     ys = _extract_column(table, y)
     uuids = isnothing(node_uuid) ? nothing : _extract_column(table, node_uuid)
-    return augment_phylopic_ranges!(ax, xs, xe, ys; node_uuid = uuids, glyph = glyph, at = at, kwargs...)
+    return augment_phylopic_ranges!(
+        ax,
+        xs::AbstractVector{<:Real},
+        xe::AbstractVector{<:Real},
+        ys::AbstractVector{<:Real};
+        node_uuid = uuids, glyph = glyph, at = at, kwargs...,
+    )
 end
 
 """
