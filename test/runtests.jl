@@ -307,5 +307,5 @@ end
 end
 
 @testset "PhyloPicMakie — JET" begin
-    JET.test_package(PhyloPicMakie; target_defined_modules = true)
+    JET.test_package(PhyloPicMakie; target_modules=(PhyloPicMakie,))
 end
