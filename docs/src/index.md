@@ -10,5 +10,5 @@ Documentation for [PhyloPicMakie](https://github.com/jeetsukumaran/PhyloPicMakie
 ```
 
 ```@autodocs
-Modules = [PhyloPicMakie]
+Modules = [PhyloPicMakie, PhyloPicMakie.PhyloPicDB]
 ```

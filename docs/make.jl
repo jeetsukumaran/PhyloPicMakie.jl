@@ -4,7 +4,7 @@ using Documenter
 DocMeta.setdocmeta!(PhyloPicMakie, :DocTestSetup, :(using PhyloPicMakie); recursive=true)
 
 makedocs(;
-    modules=[PhyloPicMakie],
+    modules=[PhyloPicMakie, PhyloPicMakie.PhyloPicDB],
     authors="Jeet Sukumaran <jeetsukumaran@gmail.com>",
     sitename="PhyloPicMakie.jl",
     format=Documenter.HTML(;
