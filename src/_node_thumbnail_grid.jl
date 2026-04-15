@@ -31,10 +31,10 @@ enriched on every image via [`PhyloPicDB.with_node_names`](@ref).
 Returns an empty vector for blank UUIDs or when no images are available.
 """
 function _fetch_node_image_pool(
-    node_uuid::AbstractString,
-    image_filter::Symbol,
-    image_max_pages::Union{Int, Nothing},
-)::Vector{PhyloPicDB.PhyloPicImage}
+        node_uuid::AbstractString,
+        image_filter::Symbol,
+        image_max_pages::Union{Int, Nothing},
+    )::Vector{PhyloPicDB.PhyloPicImage}
     isempty(strip(node_uuid)) && return PhyloPicDB.PhyloPicImage[]
     pool = if image_filter === :primary
         img = PhyloPicDB.primary_image(node_uuid)
@@ -76,24 +76,26 @@ to [`_apply_image_selector`](@ref); label construction to
 [`_build_label`](@ref).
 """
 function _build_node_grid_cells(
-    node_uuids::AbstractVector{<:Union{AbstractString, Nothing}},
-    node_labels::AbstractVector{<:AbstractString},
-    image_filter::Symbol,
-    image_selector,
-    image_max_pages::Union{Int, Nothing},
-    image_label,
-    labeljoin::AbstractString,
-    image_rendering::Symbol,
-)::Tuple{
-    Vector{String},
-    Vector{Union{Matrix{RGBA{N0f8}}, Nothing}},
-    Vector{Int},
-}
-    length(node_uuids) == length(node_labels) || throw(ArgumentError(
-        "_build_node_grid_cells: `node_uuids` and `node_labels` must have the same length."
-    ))
+        node_uuids::AbstractVector{<:Union{AbstractString, Nothing}},
+        node_labels::AbstractVector{<:AbstractString},
+        image_filter::Symbol,
+        image_selector,
+        image_max_pages::Union{Int, Nothing},
+        image_label,
+        labeljoin::AbstractString,
+        image_rendering::Symbol,
+    )::Tuple{
+        Vector{String},
+        Vector{Union{Matrix{RGBA{N0f8}}, Nothing}},
+        Vector{Int},
+    }
+    length(node_uuids) == length(node_labels) || throw(
+        ArgumentError(
+            "_build_node_grid_cells: `node_uuids` and `node_labels` must have the same length."
+        )
+    )
 
-    labels      = String[]
+    labels = String[]
     cell_images = Union{Matrix{RGBA{N0f8}}, Nothing}[]
     group_sizes = Int[]
 
@@ -102,9 +104,9 @@ function _build_node_grid_cells(
             push!(group_sizes, 0)
             continue
         end
-        pool     = _fetch_node_image_pool(uuid, image_filter, image_max_pages)
+        pool = _fetch_node_image_pool(uuid, image_filter, image_max_pages)
         selected = _apply_image_selector(pool, image_selector)
-        count    = length(selected)
+        count = length(selected)
         push!(group_sizes, count)
         multi = count > 1
         for (k, img) in enumerate(selected)
@@ -134,9 +136,9 @@ node cannot be fetched or has an empty `preferred_name`.  `nothing` entries
 produce an empty string.
 """
 function _resolve_node_labels(
-    node_uuids::AbstractVector{<:Union{AbstractString, Nothing}},
-)::Vector{String}
-    map(node_uuids) do uuid
+        node_uuids::AbstractVector{<:Union{AbstractString, Nothing}},
+    )::Vector{String}
+    return map(node_uuids) do uuid
         isnothing(uuid) && return ""
         s = strip(uuid)
         isempty(s) && return ""
@@ -224,45 +226,51 @@ phylopic_thumbnail_grid!(
 ```
 """
 function phylopic_thumbnail_grid!(
-    ax::Makie.Axis,
-    node_uuids::AbstractVector{<:Union{AbstractString, Nothing}};
-    node_labels::Union{AbstractVector{<:AbstractString}, Nothing} = nothing,
-    ncols::Union{Integer, Nothing} = nothing,
-    nrows::Union{Integer, Nothing} = nothing,
-    cell_width::Real = DEFAULT_THUMBNAIL_GRID_CELL_WIDTH,
-    cell_height::Real = DEFAULT_THUMBNAIL_GRID_CELL_HEIGHT,
-    glyph_fraction::Real = DEFAULT_THUMBNAIL_GRID_GLYPH_FRACTION,
-    label_gap::Real = DEFAULT_THUMBNAIL_GRID_LABEL_GAP,
-    label_fontsize::Real = DEFAULT_THUMBNAIL_GRID_FONT_SIZE,
-    title::Union{AbstractString, Nothing} = nothing,
-    title_gap::Real = DEFAULT_THUMBNAIL_GRID_TITLE_GAP,
-    on_missing::Symbol = :skip,
-    image_interpolate::Bool = true,
-    image_filter::Symbol = :primary,
-    image_selector = nothing,
-    image_max_pages::Union{Int, Nothing} = nothing,
-    image_layout::Symbol = :blocks,
-    image_rendering::Symbol = :thumbnail,
-    image_label = :BASICFIELDS,
-    labeljoin::AbstractString = "\n",
-    label_lines::Union{Int, Nothing} = nothing,
-)::Nothing
-    image_filter ∈ VALID_NODE_IMAGE_FILTERS || throw(ArgumentError(
-        "phylopic_thumbnail_grid!: unknown `image_filter` value `$image_filter`. " *
-        "Valid values: $(join(VALID_NODE_IMAGE_FILTERS, ", "))."
-    ))
-    image_rendering ∈ PhyloPicDB.PHYLOPIC_IMAGE_RENDERINGS || throw(ArgumentError(
-        "phylopic_thumbnail_grid!: unknown `image_rendering` value `:$image_rendering`. " *
-        "Valid values: $(join(string.(':', PhyloPicDB.PHYLOPIC_IMAGE_RENDERINGS), ", "))."
-    ))
+        ax::Makie.Axis,
+        node_uuids::AbstractVector{<:Union{AbstractString, Nothing}};
+        node_labels::Union{AbstractVector{<:AbstractString}, Nothing} = nothing,
+        ncols::Union{Integer, Nothing} = nothing,
+        nrows::Union{Integer, Nothing} = nothing,
+        cell_width::Real = DEFAULT_THUMBNAIL_GRID_CELL_WIDTH,
+        cell_height::Real = DEFAULT_THUMBNAIL_GRID_CELL_HEIGHT,
+        glyph_fraction::Real = DEFAULT_THUMBNAIL_GRID_GLYPH_FRACTION,
+        label_gap::Real = DEFAULT_THUMBNAIL_GRID_LABEL_GAP,
+        label_fontsize::Real = DEFAULT_THUMBNAIL_GRID_FONT_SIZE,
+        title::Union{AbstractString, Nothing} = nothing,
+        title_gap::Real = DEFAULT_THUMBNAIL_GRID_TITLE_GAP,
+        on_missing::Symbol = :skip,
+        image_interpolate::Bool = true,
+        image_filter::Symbol = :primary,
+        image_selector = nothing,
+        image_max_pages::Union{Int, Nothing} = nothing,
+        image_layout::Symbol = :blocks,
+        image_rendering::Symbol = :thumbnail,
+        image_label = :BASICFIELDS,
+        labeljoin::AbstractString = "\n",
+        label_lines::Union{Int, Nothing} = nothing,
+    )::Nothing
+    image_filter ∈ VALID_NODE_IMAGE_FILTERS || throw(
+        ArgumentError(
+            "phylopic_thumbnail_grid!: unknown `image_filter` value `$image_filter`. " *
+                "Valid values: $(join(VALID_NODE_IMAGE_FILTERS, ", "))."
+        )
+    )
+    image_rendering ∈ PhyloPicDB.PHYLOPIC_IMAGE_RENDERINGS || throw(
+        ArgumentError(
+            "phylopic_thumbnail_grid!: unknown `image_rendering` value `:$image_rendering`. " *
+                "Valid values: $(join(string.(':', PhyloPicDB.PHYLOPIC_IMAGE_RENDERINGS), ", "))."
+        )
+    )
 
     labels = if isnothing(node_labels)
         _resolve_node_labels(node_uuids)
     else
-        length(node_labels) == length(node_uuids) || throw(ArgumentError(
-            "phylopic_thumbnail_grid!: `node_labels` length ($(length(node_labels))) " *
-            "must match `node_uuids` length ($(length(node_uuids)))."
-        ))
+        length(node_labels) == length(node_uuids) || throw(
+            ArgumentError(
+                "phylopic_thumbnail_grid!: `node_labels` length ($(length(node_labels))) " *
+                    "must match `node_uuids` length ($(length(node_uuids)))."
+            )
+        )
         collect(String, node_labels)
     end
 
@@ -270,21 +278,21 @@ function phylopic_thumbnail_grid!(
         node_uuids, labels, image_filter, image_selector, image_max_pages,
         image_label, labeljoin, image_rendering,
     )
-    phylopic_thumbnail_grid!(
+    return phylopic_thumbnail_grid!(
         ax, cell_images, cell_labels, group_sizes;
-        ncols             = ncols,
-        nrows             = nrows,
-        cell_width        = cell_width,
-        cell_height       = cell_height,
-        glyph_fraction    = glyph_fraction,
-        label_gap         = label_gap,
-        label_fontsize    = label_fontsize,
-        title             = title,
-        title_gap         = title_gap,
-        on_missing        = on_missing,
+        ncols = ncols,
+        nrows = nrows,
+        cell_width = cell_width,
+        cell_height = cell_height,
+        glyph_fraction = glyph_fraction,
+        label_gap = label_gap,
+        label_fontsize = label_fontsize,
+        title = title,
+        title_gap = title_gap,
+        on_missing = on_missing,
         image_interpolate = image_interpolate,
-        image_layout      = image_layout,
-        label_lines       = label_lines,
+        image_layout = image_layout,
+        label_lines = label_lines,
     )
 end
 
@@ -301,11 +309,11 @@ Single-UUID convenience wrapper.  Equivalent to
 See [`phylopic_thumbnail_grid!`](@ref) for full keyword documentation.
 """
 function phylopic_thumbnail_grid!(
-    ax::Makie.Axis,
-    node_uuid::AbstractString;
-    kwargs...,
-)::Nothing
-    phylopic_thumbnail_grid!(ax, [node_uuid]; kwargs...)
+        ax::Makie.Axis,
+        node_uuid::AbstractString;
+        kwargs...,
+    )::Nothing
+    return phylopic_thumbnail_grid!(ax, [node_uuid]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------
@@ -335,16 +343,16 @@ Tables.jl-compatible source and forwards to the vector API.
 - All remaining keyword arguments are forwarded to the vector API.
 """
 function phylopic_thumbnail_grid!(
-    ax::Makie.Axis,
-    table;
-    node_uuid,
-    node_label = nothing,
-    kwargs...,
-)::Nothing
-    uuids  = collect(Union{String, Nothing}, string.(_extract_column(table, node_uuid)))
+        ax::Makie.Axis,
+        table;
+        node_uuid,
+        node_label = nothing,
+        kwargs...,
+    )::Nothing
+    uuids = collect(Union{String, Nothing}, string.(_extract_column(table, node_uuid)))
     labels = isnothing(node_label) ? nothing :
         collect(String, string.(_extract_column(table, node_label)))
-    phylopic_thumbnail_grid!(ax, uuids; node_labels = labels, kwargs...)
+    return phylopic_thumbnail_grid!(ax, uuids; node_labels = labels, kwargs...)
 end
 
 # ---------------------------------------------------------------------------
@@ -397,28 +405,28 @@ fig = phylopic_thumbnail_grid(
 ```
 """
 function phylopic_thumbnail_grid(
-    node_uuids::AbstractVector{<:Union{AbstractString, Nothing}};
-    figure_size::Union{Tuple{<:Integer, <:Integer}, Nothing} = nothing,
-    axis = NamedTuple(),
-    ncols::Union{Integer, Nothing} = nothing,
-    nrows::Union{Integer, Nothing} = nothing,
-    node_labels::Union{AbstractVector{<:AbstractString}, Nothing} = nothing,
-    image_filter::Symbol = :primary,
-    image_selector = nothing,
-    image_max_pages::Union{Int, Nothing} = nothing,
-    image_layout::Symbol = :blocks,
-    image_rendering::Symbol = :thumbnail,
-    image_label = :BASICFIELDS,
-    labeljoin::AbstractString = "\n",
-    label_lines::Union{Int, Nothing} = nothing,
-    kwargs...,
-)::Makie.Figure
+        node_uuids::AbstractVector{<:Union{AbstractString, Nothing}};
+        figure_size::Union{Tuple{<:Integer, <:Integer}, Nothing} = nothing,
+        axis = NamedTuple(),
+        ncols::Union{Integer, Nothing} = nothing,
+        nrows::Union{Integer, Nothing} = nothing,
+        node_labels::Union{AbstractVector{<:AbstractString}, Nothing} = nothing,
+        image_filter::Symbol = :primary,
+        image_selector = nothing,
+        image_max_pages::Union{Int, Nothing} = nothing,
+        image_layout::Symbol = :blocks,
+        image_rendering::Symbol = :thumbnail,
+        image_label = :BASICFIELDS,
+        labeljoin::AbstractString = "\n",
+        label_lines::Union{Int, Nothing} = nothing,
+        kwargs...,
+    )::Makie.Figure
     init_cols = isnothing(ncols) ? DEFAULT_THUMBNAIL_GRID_MAX_COLUMNS : Int(ncols)
     init_rows = max(length(node_uuids), 1)
 
     init_fig_size = if isnothing(figure_size)
         (
-            init_cols * DEFAULT_THUMBNAIL_GRID_CELL_WIDTH_PX  + DEFAULT_THUMBNAIL_GRID_FIGURE_MARGIN_PX,
+            init_cols * DEFAULT_THUMBNAIL_GRID_CELL_WIDTH_PX + DEFAULT_THUMBNAIL_GRID_FIGURE_MARGIN_PX,
             init_rows * DEFAULT_THUMBNAIL_GRID_CELL_HEIGHT_PX + DEFAULT_THUMBNAIL_GRID_FIGURE_MARGIN_PX,
         )
     else
@@ -426,28 +434,28 @@ function phylopic_thumbnail_grid(
     end
 
     fig = Makie.Figure(size = init_fig_size)
-    ax  = Makie.Axis(fig[1, 1]; axis...)
+    ax = Makie.Axis(fig[1, 1]; axis...)
     phylopic_thumbnail_grid!(
         ax,
         node_uuids;
-        node_labels     = node_labels,
-        ncols           = ncols,
-        nrows           = nrows,
-        image_filter    = image_filter,
-        image_selector  = image_selector,
+        node_labels = node_labels,
+        ncols = ncols,
+        nrows = nrows,
+        image_filter = image_filter,
+        image_selector = image_selector,
         image_max_pages = image_max_pages,
-        image_layout    = image_layout,
+        image_layout = image_layout,
         image_rendering = image_rendering,
-        image_label     = image_label,
-        labeljoin       = labeljoin,
-        label_lines     = label_lines,
+        image_label = image_label,
+        labeljoin = labeljoin,
+        label_lines = label_lines,
         kwargs...,
     )
 
     if isnothing(figure_size)
         xhi = Float64(ax.limits[][1][2])
         yhi = Float64(ax.limits[][2][2])
-        px_per_w = Float64(DEFAULT_THUMBNAIL_GRID_CELL_WIDTH_PX)  / DEFAULT_THUMBNAIL_GRID_CELL_WIDTH
+        px_per_w = Float64(DEFAULT_THUMBNAIL_GRID_CELL_WIDTH_PX) / DEFAULT_THUMBNAIL_GRID_CELL_WIDTH
         px_per_h = Float64(DEFAULT_THUMBNAIL_GRID_CELL_HEIGHT_PX) / DEFAULT_THUMBNAIL_GRID_CELL_HEIGHT
         new_w = round(Int, xhi * px_per_w) + DEFAULT_THUMBNAIL_GRID_FIGURE_MARGIN_PX
         new_h = round(Int, yhi * px_per_h) + DEFAULT_THUMBNAIL_GRID_FIGURE_MARGIN_PX
@@ -469,10 +477,10 @@ Single-UUID factory convenience wrapper.  Equivalent to
 See [`phylopic_thumbnail_grid`](@ref) for full keyword documentation.
 """
 function phylopic_thumbnail_grid(
-    node_uuid::AbstractString;
-    kwargs...,
-)::Makie.Figure
-    phylopic_thumbnail_grid([node_uuid]; kwargs...)
+        node_uuid::AbstractString;
+        kwargs...,
+    )::Makie.Figure
+    return phylopic_thumbnail_grid([node_uuid]; kwargs...)
 end
 
 """
@@ -489,13 +497,13 @@ optionally `node_label`) and calls the vector factory.
 See [`phylopic_thumbnail_grid!`](@ref) for keyword documentation.
 """
 function phylopic_thumbnail_grid(
-    table;
-    node_uuid,
-    node_label = nothing,
-    kwargs...,
-)::Makie.Figure
-    uuids  = collect(Union{String, Nothing}, string.(_extract_column(table, node_uuid)))
+        table;
+        node_uuid,
+        node_label = nothing,
+        kwargs...,
+    )::Makie.Figure
+    uuids = collect(Union{String, Nothing}, string.(_extract_column(table, node_uuid)))
     labels = isnothing(node_label) ? nothing :
         collect(String, string.(_extract_column(table, node_label)))
-    phylopic_thumbnail_grid(uuids; node_labels = labels, kwargs...)
+    return phylopic_thumbnail_grid(uuids; node_labels = labels, kwargs...)
 end

@@ -53,9 +53,9 @@ enriched[1].node_name   # → "Tyrannosaurus" (or nothing if node unreachable)
 ```
 """
 function with_node_names(
-    images::AbstractVector{PhyloPicImage};
-    build::Union{Int, Nothing} = nothing,
-)::Vector{PhyloPicImage}
+        images::AbstractVector{PhyloPicImage};
+        build::Union{Int, Nothing} = nothing,
+    )::Vector{PhyloPicImage}
     b = ensure_build(build)
     uuid_to_name = Dict{String, String}()
     for img in images
@@ -67,10 +67,10 @@ function with_node_names(
     end
     return [
         let u = img.specific_node_uuid
-            (!isnothing(u) && haskey(uuid_to_name, u::String)) ?
+                (!isnothing(u) && haskey(uuid_to_name, u::String)) ?
                 _with_node_name(img, uuid_to_name[u::String]) : img
         end
-        for img in images
+            for img in images
     ]
 end
 
@@ -111,10 +111,10 @@ isnothing(img2) || println(img2.node_name)
 ```
 """
 function primary_image(
-    node_uuid::AbstractString;
-    build::Union{Int, Nothing} = nothing,
-    add_node_name::Bool        = false,
-)::Union{PhyloPicImage, Nothing}
+        node_uuid::AbstractString;
+        build::Union{Int, Nothing} = nothing,
+        add_node_name::Bool = false,
+    )::Union{PhyloPicImage, Nothing}
     _, img = fetch_node_with_primary_image(node_uuid; build = build)
     isnothing(img) && return nothing
     add_node_name || return img
@@ -161,16 +161,17 @@ imgs2[1].node_name   # → e.g. "Carnivora"
 ```
 """
 function clade_images(
-    node_uuid::AbstractString;
-    build::Union{Int, Nothing}     = nothing,
-    max_pages::Union{Int, Nothing} = nothing,
-    add_node_name::Bool            = false,
-)::Vector{PhyloPicImage}
-    return fetch_images(node_uuid;
-        build          = build,
-        filter         = :clade,
-        max_pages      = max_pages,
-        add_node_name  = add_node_name,
+        node_uuid::AbstractString;
+        build::Union{Int, Nothing} = nothing,
+        max_pages::Union{Int, Nothing} = nothing,
+        add_node_name::Bool = false,
+    )::Vector{PhyloPicImage}
+    return fetch_images(
+        node_uuid;
+        build = build,
+        filter = :clade,
+        max_pages = max_pages,
+        add_node_name = add_node_name,
     )
 end
 
@@ -207,15 +208,16 @@ length(imgs)   # usually fewer than clade_images
 ```
 """
 function node_images(
-    node_uuid::AbstractString;
-    build::Union{Int, Nothing}     = nothing,
-    max_pages::Union{Int, Nothing} = nothing,
-    add_node_name::Bool            = false,
-)::Vector{PhyloPicImage}
-    return fetch_images(node_uuid;
-        build         = build,
-        filter        = :node,
-        max_pages     = max_pages,
+        node_uuid::AbstractString;
+        build::Union{Int, Nothing} = nothing,
+        max_pages::Union{Int, Nothing} = nothing,
+        add_node_name::Bool = false,
+    )::Vector{PhyloPicImage}
+    return fetch_images(
+        node_uuid;
+        build = build,
+        filter = :node,
+        max_pages = max_pages,
         add_node_name = add_node_name,
     )
 end
@@ -264,27 +266,29 @@ select_image(imgs, v -> last(v))   # last image via callable
 ```
 """
 function select_image(
-    images::AbstractVector{PhyloPicImage},
-    selector::Symbol,
-)::Union{PhyloPicImage, Nothing}
+        images::AbstractVector{PhyloPicImage},
+        selector::Symbol,
+    )::Union{PhyloPicImage, Nothing}
     selector === :first && return isempty(images) ? nothing : images[1]
-    throw(ArgumentError(
-        "select_image: unrecognised Symbol selector :$selector. " *
-        "Valid symbol: :first."
-    ))
+    throw(
+        ArgumentError(
+            "select_image: unrecognised Symbol selector :$selector. " *
+                "Valid symbol: :first."
+        )
+    )
 end
 
 function select_image(
-    images::AbstractVector{PhyloPicImage},
-    selector::Int,
-)::Union{PhyloPicImage, Nothing}
+        images::AbstractVector{PhyloPicImage},
+        selector::Int,
+    )::Union{PhyloPicImage, Nothing}
     (isempty(images) || selector < 1 || selector > length(images)) && return nothing
     return images[selector]
 end
 
 function select_image(
-    images::AbstractVector{PhyloPicImage},
-    selector,
-)::Union{PhyloPicImage, Nothing}
+        images::AbstractVector{PhyloPicImage},
+        selector,
+    )::Union{PhyloPicImage, Nothing}
     return selector(images)
 end

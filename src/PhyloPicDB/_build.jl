@@ -14,9 +14,9 @@
 const BUILD_TTL = 3600.0
 
 # Thread-safe module-level build cache.
-const _BUILD_LOCK  = ReentrantLock()
+const _BUILD_LOCK = ReentrantLock()
 const _BUILD_CACHE = Ref{Union{Nothing, Int}}(nothing)
-const _BUILD_TIME  = Ref{Float64}(0.0)
+const _BUILD_TIME = Ref{Float64}(0.0)
 
 """
     fetch_current_build(; force = false) -> Int
@@ -50,13 +50,13 @@ build3 = fetch_current_build(; force = true)  # forces a new request
 ```
 """
 function fetch_current_build(; force::Bool = false)::Int
-    lock(_BUILD_LOCK) do
+    return lock(_BUILD_LOCK) do
         expired = (time() - _BUILD_TIME[]) > BUILD_TTL
         if isnothing(_BUILD_CACHE[]) || expired || force
             resp = phylopic_get(PHYLOPIC_BASE_URL)
-            obj  = JSON3.read(resp.body)
+            obj = JSON3.read(resp.body)
             _BUILD_CACHE[] = Int(obj.build)
-            _BUILD_TIME[]  = time()
+            _BUILD_TIME[] = time()
         end
         return _BUILD_CACHE[]
     end
@@ -91,5 +91,5 @@ ensure_build(nothing)  # → fetch_current_build()
 ```
 """
 function ensure_build(build::Union{Int, Nothing}; force::Bool = false)::Int
-    isnothing(build) ? fetch_current_build(; force = force) : build
+    return isnothing(build) ? fetch_current_build(; force = force) : build
 end

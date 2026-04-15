@@ -25,29 +25,33 @@ resolution fails, produce `nothing` in the output.  The caller handles
 these according to its `on_missing` policy.
 """
 function _resolve_images_by_uuid(
-    node_uuids::Union{AbstractVector{<:Union{AbstractString, Nothing}}, Nothing},
-    glyph::Union{AbstractMatrix, Nothing},
-    n::Integer;
-    image_rendering::Symbol = :thumbnail,
-)::Vector{Union{Matrix{RGBA{N0f8}}, Nothing}}
+        node_uuids::Union{AbstractVector{<:Union{AbstractString, Nothing}}, Nothing},
+        glyph::Union{AbstractMatrix, Nothing},
+        n::Integer;
+        image_rendering::Symbol = :thumbnail,
+    )::Vector{Union{Matrix{RGBA{N0f8}}, Nothing}}
     if !isnothing(glyph)
         # Broadcast the single pre-loaded image to every data point.
         img_rgba = Matrix{RGBA{N0f8}}(RGBA{N0f8}.(glyph))
         return fill(img_rgba, n)
     end
 
-    isnothing(node_uuids) && throw(ArgumentError(
-        "_resolve_images_by_uuid: one of `node_uuids` or `glyph` must be provided."
-    ))
-    length(node_uuids) == n || throw(ArgumentError(
-        "_resolve_images_by_uuid: `node_uuids` length ($(length(node_uuids))) must match " *
-        "coordinate length ($n)."
-    ))
+    isnothing(node_uuids) && throw(
+        ArgumentError(
+            "_resolve_images_by_uuid: one of `node_uuids` or `glyph` must be provided."
+        )
+    )
+    length(node_uuids) == n || throw(
+        ArgumentError(
+            "_resolve_images_by_uuid: `node_uuids` length ($(length(node_uuids))) must match " *
+                "coordinate length ($n)."
+        )
+    )
 
     # Deduplicate: fetch primary image once per unique non-nothing, non-empty UUID.
     unique_uuids = unique(
         u for u in node_uuids
-        if !isnothing(u) && !isempty(strip(u))
+            if !isnothing(u) && !isempty(strip(u))
     )
     image_cache = Dict{String, Union{Matrix{RGBA{N0f8}}, Nothing}}()
     for uuid in unique_uuids

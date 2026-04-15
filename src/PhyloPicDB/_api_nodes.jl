@@ -31,10 +31,10 @@ isnothing(node) || println(node.preferred_name)
 ```
 """
 function fetch_node(
-    uuid::AbstractString;
-    build::Union{Int, Nothing} = nothing,
-)::Union{PhyloPicNode, Nothing}
-    b   = ensure_build(build)
+        uuid::AbstractString;
+        build::Union{Int, Nothing} = nothing,
+    )::Union{PhyloPicNode, Nothing}
+    b = ensure_build(build)
     url = "$PHYLOPIC_BASE_URL/nodes/$uuid?build=$b"
     try
         resp = phylopic_get(url)
@@ -75,14 +75,14 @@ end
 ```
 """
 function fetch_node_with_primary_image(
-    uuid::AbstractString;
-    build::Union{Int, Nothing} = nothing,
-)::Tuple{Union{PhyloPicNode, Nothing}, Union{PhyloPicImage, Nothing}}
-    b   = ensure_build(build)
+        uuid::AbstractString;
+        build::Union{Int, Nothing} = nothing,
+    )::Tuple{Union{PhyloPicNode, Nothing}, Union{PhyloPicImage, Nothing}}
+    b = ensure_build(build)
     url = "$PHYLOPIC_BASE_URL/nodes/$uuid?build=$b&embed_primaryImage=true"
     try
         resp = phylopic_get(url)
-        obj  = JSON3.read(resp.body)
+        obj = JSON3.read(resp.body)
         node = _parse_node_json(obj, b)
 
         img = nothing

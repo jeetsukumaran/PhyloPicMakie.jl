@@ -42,15 +42,15 @@ isnothing(img2) || println(img2.node_name)
 ```
 """
 function fetch_image(
-    uuid::AbstractString;
-    build::Union{Int, Nothing} = nothing,
-    add_node_name::Bool        = false,
-)::Union{PhyloPicImage, Nothing}
-    b   = ensure_build(build)
+        uuid::AbstractString;
+        build::Union{Int, Nothing} = nothing,
+        add_node_name::Bool = false,
+    )::Union{PhyloPicImage, Nothing}
+    b = ensure_build(build)
     url = "$PHYLOPIC_BASE_URL/images/$uuid?build=$b"
     try
         resp = phylopic_get(url)
-        img  = _parse_image_json(JSON3.read(resp.body), b)
+        img = _parse_image_json(JSON3.read(resp.body), b)
         isempty(img.uuid) && return nothing
         if add_node_name && !isnothing(img.specific_node_uuid)
             node = fetch_node(img.specific_node_uuid; build = b)
@@ -71,19 +71,27 @@ end
 # Returns a (possibly empty) Vector{PhyloPicImage} and the total page count,
 # or (empty, 0) on any error.
 function _fetch_images_page(
-    node_uuid::AbstractString,
-    build::Int,
-    page::Int,
-    filter_param::AbstractString,
-)::Tuple{Vector{PhyloPicImage}, Int}
+        node_uuid::AbstractString,
+        build::Int,
+        page::Int,
+        filter_param::AbstractString,
+    )::Tuple{Vector{PhyloPicImage}, Int}
     url = "$PHYLOPIC_BASE_URL/images?build=$build" *
-          "&$filter_param=$node_uuid&embed_items=true&page=$page"
+        "&$filter_param=$node_uuid&embed_items=true&page=$page"
     try
-        resp    = phylopic_get(url)
-        obj     = JSON3.read(resp.body)
-        n_pages = try Int(obj.totalPages) catch; 1 end
-        items   = try obj._embedded.items catch; return (PhyloPicImage[], n_pages) end
-        images  = [_parse_image_json(item, build) for item in items]
+        resp = phylopic_get(url)
+        obj = JSON3.read(resp.body)
+        n_pages = try
+            Int(obj.totalPages)
+        catch
+            1
+        end
+        items = try
+            obj._embedded.items
+        catch
+            return (PhyloPicImage[], n_pages)
+        end
+        images = [_parse_image_json(item, build) for item in items]
         # Discard entries that failed to parse (empty uuid).
         filter!(img -> !isempty(img.uuid), images)
         return (images, n_pages)
@@ -144,18 +152,20 @@ imgs2[1].node_name   # → e.g. "Carnivora"
 ```
 """
 function fetch_images(
-    node_uuid::AbstractString;
-    build::Union{Int, Nothing}     = nothing,
-    filter::Symbol                 = :clade,
-    max_pages::Union{Int, Nothing} = nothing,
-    add_node_name::Bool            = false,
-)::Vector{PhyloPicImage}
+        node_uuid::AbstractString;
+        build::Union{Int, Nothing} = nothing,
+        filter::Symbol = :clade,
+        max_pages::Union{Int, Nothing} = nothing,
+        add_node_name::Bool = false,
+    )::Vector{PhyloPicImage}
     filter in (:clade, :node) ||
-        throw(ArgumentError(
+        throw(
+        ArgumentError(
             "fetch_images: `filter` must be :clade or :node, got :$filter"
-        ))
+        )
+    )
 
-    b            = ensure_build(build)
+    b = ensure_build(build)
     filter_param = filter === :clade ? "filter_clade" : "filter_node"
 
     # Fetch page 0 to learn totalPages.

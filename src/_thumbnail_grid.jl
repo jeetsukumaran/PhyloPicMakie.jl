@@ -1,4 +1,3 @@
-
 # ---------------------------------------------------------------------------
 # PhyloPicMakie — thumbnail grid rendering
 #
@@ -30,16 +29,16 @@ import Makie
 # Constants
 # ---------------------------------------------------------------------------
 
-const DEFAULT_THUMBNAIL_GRID_MAX_COLUMNS    = 4
-const DEFAULT_THUMBNAIL_GRID_CELL_WIDTH     = 1.0
-const DEFAULT_THUMBNAIL_GRID_CELL_HEIGHT    = 1.6
+const DEFAULT_THUMBNAIL_GRID_MAX_COLUMNS = 4
+const DEFAULT_THUMBNAIL_GRID_CELL_WIDTH = 1.0
+const DEFAULT_THUMBNAIL_GRID_CELL_HEIGHT = 1.6
 const DEFAULT_THUMBNAIL_GRID_GLYPH_FRACTION = 0.55
-const DEFAULT_THUMBNAIL_GRID_LABEL_GAP      = 0.10
-const DEFAULT_THUMBNAIL_GRID_FONT_SIZE      = 18.0
+const DEFAULT_THUMBNAIL_GRID_LABEL_GAP = 0.1
+const DEFAULT_THUMBNAIL_GRID_FONT_SIZE = 18.0
 const DEFAULT_THUMBNAIL_GRID_FIGURE_MARGIN_PX = 80
-const DEFAULT_THUMBNAIL_GRID_CELL_WIDTH_PX  = 320
+const DEFAULT_THUMBNAIL_GRID_CELL_WIDTH_PX = 320
 const DEFAULT_THUMBNAIL_GRID_CELL_HEIGHT_PX = 260
-const DEFAULT_THUMBNAIL_GRID_TITLE_GAP      = 0.12
+const DEFAULT_THUMBNAIL_GRID_TITLE_GAP = 0.12
 
 """
 Valid `image_layout` symbols for the thumbnail grid.
@@ -92,23 +91,29 @@ Throws `ArgumentError` if either requested dimension is non-positive or if the
 requested grid cannot accommodate `n` taxa.
 """
 function _infer_thumbnail_grid_shape(
-    n::Integer;
-    ncols::Union{Integer, Nothing} = nothing,
-    nrows::Union{Integer, Nothing} = nothing,
-)::Tuple{Int, Int}
-    n ≥ 0 || throw(ArgumentError(
-        "phylopic_thumbnail_grid: `n` must be non-negative. Got $n."
-    ))
+        n::Integer;
+        ncols::Union{Integer, Nothing} = nothing,
+        nrows::Union{Integer, Nothing} = nothing,
+    )::Tuple{Int, Int}
+    n ≥ 0 || throw(
+        ArgumentError(
+            "phylopic_thumbnail_grid: `n` must be non-negative. Got $n."
+        )
+    )
 
     if !isnothing(ncols)
-        ncols > 0 || throw(ArgumentError(
-            "phylopic_thumbnail_grid: `ncols` must be positive. Got $ncols."
-        ))
+        ncols > 0 || throw(
+            ArgumentError(
+                "phylopic_thumbnail_grid: `ncols` must be positive. Got $ncols."
+            )
+        )
     end
     if !isnothing(nrows)
-        nrows > 0 || throw(ArgumentError(
-            "phylopic_thumbnail_grid: `nrows` must be positive. Got $nrows."
-        ))
+        nrows > 0 || throw(
+            ArgumentError(
+                "phylopic_thumbnail_grid: `nrows` must be positive. Got $nrows."
+            )
+        )
     end
 
     if n == 0
@@ -118,10 +123,12 @@ function _infer_thumbnail_grid_shape(
     end
 
     if !isnothing(ncols) && !isnothing(nrows)
-        ncols * nrows ≥ n || throw(ArgumentError(
-            "phylopic_thumbnail_grid: grid with ncols = $ncols and nrows = $nrows " *
-            "cannot accommodate $n taxa."
-        ))
+        ncols * nrows ≥ n || throw(
+            ArgumentError(
+                "phylopic_thumbnail_grid: grid with ncols = $ncols and nrows = $nrows " *
+                    "cannot accommodate $n taxa."
+            )
+        )
         return (Int(ncols), Int(nrows))
     elseif !isnothing(ncols)
         cols = Int(ncols)
@@ -158,13 +165,13 @@ it defaults to `cell_height / 2` (centred glyph).  Pass a larger value (e.g.
 of an expanded row, keeping label space below.
 """
 function _thumbnail_grid_positions(
-    n::Integer,
-    ncols::Integer,
-    nrows::Integer;
-    cell_width::Real,
-    cell_height::Real,
-    glyph_y_in_row::Real = Float64(cell_height) / 2.0,
-)::Vector{Tuple{Float64, Float64}}
+        n::Integer,
+        ncols::Integer,
+        nrows::Integer;
+        cell_width::Real,
+        cell_height::Real,
+        glyph_y_in_row::Real = Float64(cell_height) / 2.0,
+    )::Vector{Tuple{Float64, Float64}}
     positions = Vector{Tuple{Float64, Float64}}(undef, n)
     for i in 1:n
         row_index = cld(i, ncols)
@@ -187,11 +194,11 @@ end
 Return `(xmin, xmax, ymin, ymax)` covering the full thumbnail grid.
 """
 function _thumbnail_grid_axis_limits(
-    ncols::Integer,
-    nrows::Integer;
-    cell_width::Real,
-    cell_height::Real,
-)::NTuple{4, Float64}
+        ncols::Integer,
+        nrows::Integer;
+        cell_width::Real,
+        cell_height::Real,
+    )::NTuple{4, Float64}
     xmin = 0.0
     xmax = Float64(ncols) * Float64(cell_width)
     ymin = 0.0
@@ -211,12 +218,12 @@ end
 Return the label anchor position beneath a thumbnail centred at `(x, y)`.
 """
 function _thumbnail_label_position(
-    x::Real,
-    y::Real;
-    cell_height::Real,
-    glyph_fraction::Real,
-    label_gap::Real,
-)::Tuple{Float64, Float64}
+        x::Real,
+        y::Real;
+        cell_height::Real,
+        glyph_fraction::Real,
+        label_gap::Real,
+    )::Tuple{Float64, Float64}
     glyph_half_height = Float64(cell_height) * Float64(glyph_fraction) / 2
     label_y = Float64(y) - glyph_half_height - Float64(label_gap)
     return (Float64(x), label_y)
@@ -233,11 +240,11 @@ end
 Draw a placeholder rectangle for a missing thumbnail.
 """
 function _draw_thumbnail_placeholder!(
-    ax::Makie.Axis,
-    x::Real,
-    y::Real;
-    glyph_size::Real,
-)::Nothing
+        ax::Makie.Axis,
+        x::Real,
+        y::Real;
+        glyph_size::Real,
+    )::Nothing
     x_lo, x_hi, y_lo, y_hi = _compute_image_bbox(
         x,
         y,
@@ -285,9 +292,9 @@ Callable results that are a single `PhyloPicDB.PhyloPicImage` are coerced to a
 1-element vector as a convenience.  Any other return type yields `[]`.
 """
 function _apply_image_selector(
-    pool::AbstractVector{PhyloPicDB.PhyloPicImage},
-    image_selector,
-)::Vector{PhyloPicDB.PhyloPicImage}
+        pool::AbstractVector{PhyloPicDB.PhyloPicImage},
+        image_selector,
+    )::Vector{PhyloPicDB.PhyloPicImage}
     isnothing(image_selector) && return collect(pool)
     if image_selector === :first
         return isempty(pool) ? PhyloPicDB.PhyloPicImage[] : [pool[1]]
@@ -324,18 +331,20 @@ Returns `missing` when the selected field is absent on `img`.
 Throws `ArgumentError` for unrecognised symbols.
 """
 function _select_image_url(
-    img::PhyloPicDB.PhyloPicImage,
-    image_rendering::Symbol,
-)::Union{String, Missing}
+        img::PhyloPicDB.PhyloPicImage,
+        image_rendering::Symbol,
+    )::Union{String, Missing}
     image_rendering === :thumbnail   && return img.thumbnail_url
     image_rendering === :raster      && return img.raster_url
     image_rendering === :og_image    && return img.og_image_url
     image_rendering === :vector      && return img.vector_url
     image_rendering === :source_file && return img.source_file_url
-    throw(ArgumentError(
-        "_select_image_url: unknown `image_rendering` value `:$image_rendering`. " *
-        "Valid values: $(join(string.(':', PhyloPicDB.PHYLOPIC_IMAGE_RENDERINGS), ", "))."
-    ))
+    throw(
+        ArgumentError(
+            "_select_image_url: unknown `image_rendering` value `:$image_rendering`. " *
+                "Valid values: $(join(string.(':', PhyloPicDB.PHYLOPIC_IMAGE_RENDERINGS), ", "))."
+        )
+    )
 end
 
 """
@@ -354,10 +363,10 @@ included for diagnostics.
 See [`_select_image_url`](@ref) for the full `image_rendering` symbol table.
 """
 function _download_image(
-    img::PhyloPicDB.PhyloPicImage,
-    label::AbstractString;
-    image_rendering::Symbol = :thumbnail,
-)::Union{Matrix{RGBA{N0f8}}, Nothing}
+        img::PhyloPicDB.PhyloPicImage,
+        label::AbstractString;
+        image_rendering::Symbol = :thumbnail,
+    )::Union{Matrix{RGBA{N0f8}}, Nothing}
     url = _select_image_url(img, image_rendering)
     ismissing(url) && return nothing
     try
@@ -387,16 +396,16 @@ with no wrapping.
 `total_cols` = size of the largest group (grid is as wide as the widest row).
 """
 function _rows_grid_positions(
-    group_sizes::AbstractVector{<:Integer};
-    cell_width::Real,
-    cell_height::Real,
-    glyph_y_in_row::Real = Float64(cell_height) / 2.0,
-)::Tuple{Vector{Tuple{Float64, Float64}}, Int, Int}
-    non_empty  = [g for g in group_sizes if g > 0]
+        group_sizes::AbstractVector{<:Integer};
+        cell_width::Real,
+        cell_height::Real,
+        glyph_y_in_row::Real = Float64(cell_height) / 2.0,
+    )::Tuple{Vector{Tuple{Float64, Float64}}, Int, Int}
+    non_empty = [g for g in group_sizes if g > 0]
     total_rows = length(non_empty)
     total_cols = isempty(non_empty) ? 1 : maximum(non_empty)
-    positions  = Tuple{Float64, Float64}[]
-    row_idx    = 0
+    positions = Tuple{Float64, Float64}[]
+    row_idx = 0
     for g in group_sizes
         g == 0 && continue
         for j in 1:g
@@ -419,9 +428,9 @@ Return the total number of grid rows required for a grouped layout where each
 non-empty group starts on a fresh row and wraps at `ncols`.
 """
 function _grouped_grid_total_rows(
-    group_sizes::AbstractVector{<:Integer},
-    ncols::Integer,
-)::Int
+        group_sizes::AbstractVector{<:Integer},
+        ncols::Integer,
+    )::Int
     return sum(cld(g, ncols) for g in group_sizes if g > 0; init = 0)
 end
 
@@ -441,21 +450,21 @@ group always begins at the leftmost column of the next available row below the
 preceding group.
 """
 function _grouped_grid_positions(
-    group_sizes::AbstractVector{<:Integer},
-    ncols::Integer;
-    cell_width::Real,
-    cell_height::Real,
-    glyph_y_in_row::Real = Float64(cell_height) / 2.0,
-)::Vector{Tuple{Float64, Float64}}
+        group_sizes::AbstractVector{<:Integer},
+        ncols::Integer;
+        cell_width::Real,
+        cell_height::Real,
+        glyph_y_in_row::Real = Float64(cell_height) / 2.0,
+    )::Vector{Tuple{Float64, Float64}}
     total_rows = _grouped_grid_total_rows(group_sizes, ncols)
-    positions  = Tuple{Float64, Float64}[]
+    positions = Tuple{Float64, Float64}[]
     row_offset = 0
     for g in group_sizes
         g == 0 && continue
         for j in 1:g
             group_row = cld(j, ncols) - 1
-            col_idx   = ((j - 1) % ncols) + 1
-            global_r  = row_offset + group_row
+            col_idx = ((j - 1) % ncols) + 1
+            global_r = row_offset + group_row
             x = (Float64(col_idx) - 0.5) * Float64(cell_width)
             y = Float64(total_rows - 1 - global_r) * Float64(cell_height) + Float64(glyph_y_in_row)
             push!(positions, (x, y))
@@ -492,11 +501,11 @@ All other recognised symbols map directly to the corresponding field of `img`
 throw an `ArgumentError`.
 """
 function _extract_image_field(
-    field::Symbol,
-    taxon_name::AbstractString,
-    k::Int,
-    img::PhyloPicDB.PhyloPicImage,
-)::Union{String, Missing, Nothing}
+        field::Symbol,
+        taxon_name::AbstractString,
+        k::Int,
+        img::PhyloPicDB.PhyloPicImage,
+    )::Union{String, Missing, Nothing}
     field === :taxon_name         && return String(taxon_name)
     field === :index              && return string(k)
     field === :node_name          && return img.node_name
@@ -511,11 +520,13 @@ function _extract_image_field(
     field === :contributor        && return img.contributor_href
     field === :specific_node_uuid && return img.specific_node_uuid
     field === :general_node_uuid  && return img.general_node_uuid
-    throw(ArgumentError(
-        "_extract_image_field: unknown field symbol :$field. " *
-        "Valid field symbols: $(join(string.(':', ALLFIELDS_IMAGE_LABEL), ", ")). " *
-        "Preset symbols handled by _build_label: :ALLFIELDS, :BASICFIELDS."
-    ))
+    throw(
+        ArgumentError(
+            "_extract_image_field: unknown field symbol :$field. " *
+                "Valid field symbols: $(join(string.(':', ALLFIELDS_IMAGE_LABEL), ", ")). " *
+                "Preset symbols handled by _build_label: :ALLFIELDS, :BASICFIELDS."
+        )
+    )
 end
 
 """
@@ -534,12 +545,12 @@ Calls [`_extract_image_field`](@ref) per symbol; unknown symbols propagate its
 `ArgumentError`.
 """
 function _join_fields(
-    fields::AbstractVector{Symbol},
-    taxon_name::AbstractString,
-    k::Int,
-    img::PhyloPicDB.PhyloPicImage,
-    sep::AbstractString,
-)::String
+        fields::AbstractVector{Symbol},
+        taxon_name::AbstractString,
+        k::Int,
+        img::PhyloPicDB.PhyloPicImage,
+        sep::AbstractString,
+    )::String
     vals = (_extract_image_field(f, taxon_name, k, img) for f in fields)
     parts = String[v::String for v in vals if v isa String && !isempty(v)]
     return join(parts, sep)
@@ -573,16 +584,16 @@ Generate the display label for a single grid cell.
 produce a single string.  Unrecognized symbols throw `ArgumentError`.
 """
 function _build_label(
-    taxon_name::AbstractString,
-    k::Int,
-    is_multi::Bool,
-    img::PhyloPicDB.PhyloPicImage,
-    image_label,
-    labeljoin::AbstractString,
-)::String
+        taxon_name::AbstractString,
+        k::Int,
+        is_multi::Bool,
+        img::PhyloPicDB.PhyloPicImage,
+        image_label,
+        labeljoin::AbstractString,
+    )::String
     isnothing(image_label) && return is_multi ? "$(taxon_name) [$k]" : String(taxon_name)
     if image_label isa Symbol
-        image_label === :ALLFIELDS   && return _join_fields(ALLFIELDS_IMAGE_LABEL,  taxon_name, k, img, labeljoin)
+        image_label === :ALLFIELDS   && return _join_fields(ALLFIELDS_IMAGE_LABEL, taxon_name, k, img, labeljoin)
         image_label === :BASICFIELDS && return _join_fields(BASICFIELDS_IMAGE_LABEL, taxon_name, k, img, labeljoin)
         # Single structural field — fall back to default if absent.
         val = _extract_image_field(image_label, taxon_name, k, img)
@@ -665,51 +676,67 @@ taxon names, use `PaleobiologyDB.PhyloPicPBDB.phylopic_thumbnail_grid!`.
 `Nothing`.  The plot is added to `ax` by side effect.
 """
 function phylopic_thumbnail_grid!(
-    ax::Makie.Axis,
-    cell_images::AbstractVector,
-    labels::AbstractVector{<:AbstractString},
-    group_sizes::AbstractVector{<:Integer};
-    ncols::Union{Integer, Nothing} = nothing,
-    nrows::Union{Integer, Nothing} = nothing,
-    cell_width::Real = DEFAULT_THUMBNAIL_GRID_CELL_WIDTH,
-    cell_height::Real = DEFAULT_THUMBNAIL_GRID_CELL_HEIGHT,
-    glyph_fraction::Real = DEFAULT_THUMBNAIL_GRID_GLYPH_FRACTION,
-    label_gap::Real = DEFAULT_THUMBNAIL_GRID_LABEL_GAP,
-    label_fontsize::Real = DEFAULT_THUMBNAIL_GRID_FONT_SIZE,
-    title::Union{AbstractString, Nothing} = nothing,
-    title_gap::Real = DEFAULT_THUMBNAIL_GRID_TITLE_GAP,
-    on_missing::Symbol = :skip,
-    image_interpolate::Bool = true,
-    image_layout::Symbol = :blocks,
-    label_lines::Union{Int, Nothing} = nothing,
-)::Nothing
-    cell_width > 0 || throw(ArgumentError(
-        "phylopic_thumbnail_grid!: `cell_width` must be positive. Got $cell_width."
-    ))
-    cell_height > 0 || throw(ArgumentError(
-        "phylopic_thumbnail_grid!: `cell_height` must be positive. Got $cell_height."
-    ))
-    0 < glyph_fraction < 1 || throw(ArgumentError(
-        "phylopic_thumbnail_grid!: `glyph_fraction` must lie strictly between 0 and 1. " *
-        "Got $glyph_fraction."
-    ))
-    label_gap ≥ 0 || throw(ArgumentError(
-        "phylopic_thumbnail_grid!: `label_gap` must be non-negative. Got $label_gap."
-    ))
-    label_fontsize > 0 || throw(ArgumentError(
-        "phylopic_thumbnail_grid!: `label_fontsize` must be positive. Got $label_fontsize."
-    ))
-    title_gap ≥ 0 || throw(ArgumentError(
-        "phylopic_thumbnail_grid!: `title_gap` must be non-negative. Got $title_gap."
-    ))
-    on_missing ∈ VALID_ON_MISSING || throw(ArgumentError(
-        "phylopic_thumbnail_grid!: unknown `on_missing` value `$on_missing`. " *
-        "Valid values: $(join(VALID_ON_MISSING, ", "))."
-    ))
-    image_layout ∈ VALID_IMAGE_LAYOUTS || throw(ArgumentError(
-        "phylopic_thumbnail_grid!: unknown `image_layout` value `$image_layout`. " *
-        "Valid values: $(join(VALID_IMAGE_LAYOUTS, ", "))."
-    ))
+        ax::Makie.Axis,
+        cell_images::AbstractVector,
+        labels::AbstractVector{<:AbstractString},
+        group_sizes::AbstractVector{<:Integer};
+        ncols::Union{Integer, Nothing} = nothing,
+        nrows::Union{Integer, Nothing} = nothing,
+        cell_width::Real = DEFAULT_THUMBNAIL_GRID_CELL_WIDTH,
+        cell_height::Real = DEFAULT_THUMBNAIL_GRID_CELL_HEIGHT,
+        glyph_fraction::Real = DEFAULT_THUMBNAIL_GRID_GLYPH_FRACTION,
+        label_gap::Real = DEFAULT_THUMBNAIL_GRID_LABEL_GAP,
+        label_fontsize::Real = DEFAULT_THUMBNAIL_GRID_FONT_SIZE,
+        title::Union{AbstractString, Nothing} = nothing,
+        title_gap::Real = DEFAULT_THUMBNAIL_GRID_TITLE_GAP,
+        on_missing::Symbol = :skip,
+        image_interpolate::Bool = true,
+        image_layout::Symbol = :blocks,
+        label_lines::Union{Int, Nothing} = nothing,
+    )::Nothing
+    cell_width > 0 || throw(
+        ArgumentError(
+            "phylopic_thumbnail_grid!: `cell_width` must be positive. Got $cell_width."
+        )
+    )
+    cell_height > 0 || throw(
+        ArgumentError(
+            "phylopic_thumbnail_grid!: `cell_height` must be positive. Got $cell_height."
+        )
+    )
+    0 < glyph_fraction < 1 || throw(
+        ArgumentError(
+            "phylopic_thumbnail_grid!: `glyph_fraction` must lie strictly between 0 and 1. " *
+                "Got $glyph_fraction."
+        )
+    )
+    label_gap ≥ 0 || throw(
+        ArgumentError(
+            "phylopic_thumbnail_grid!: `label_gap` must be non-negative. Got $label_gap."
+        )
+    )
+    label_fontsize > 0 || throw(
+        ArgumentError(
+            "phylopic_thumbnail_grid!: `label_fontsize` must be positive. Got $label_fontsize."
+        )
+    )
+    title_gap ≥ 0 || throw(
+        ArgumentError(
+            "phylopic_thumbnail_grid!: `title_gap` must be non-negative. Got $title_gap."
+        )
+    )
+    on_missing ∈ VALID_ON_MISSING || throw(
+        ArgumentError(
+            "phylopic_thumbnail_grid!: unknown `on_missing` value `$on_missing`. " *
+                "Valid values: $(join(VALID_ON_MISSING, ", "))."
+        )
+    )
+    image_layout ∈ VALID_IMAGE_LAYOUTS || throw(
+        ArgumentError(
+            "phylopic_thumbnail_grid!: unknown `image_layout` value `$image_layout`. " *
+                "Valid values: $(join(VALID_IMAGE_LAYOUTS, ", "))."
+        )
+    )
 
     total_cells = length(cell_images)
 
@@ -722,29 +749,35 @@ function phylopic_thumbnail_grid!(
     # headroom above the glyph as in the standard layout.
     auto_lines = isempty(labels) ? 1 :
         maximum(count('\n', lbl) + 1 for lbl in labels)
-    n_label_lines   = isnothing(label_lines) ? auto_lines : max(1, Int(label_lines))
-    slls            = Float64(cell_height) * (1.0 - Float64(glyph_fraction)) / 2.0 -
-                      Float64(label_gap)
+    n_label_lines = isnothing(label_lines) ? auto_lines : max(1, Int(label_lines))
+    slls = Float64(cell_height) * (1.0 - Float64(glyph_fraction)) / 2.0 -
+        Float64(label_gap)
     eff_cell_height = Float64(cell_height) +
-                      Float64(n_label_lines - 1) * max(0.0, slls)
+        Float64(n_label_lines - 1) * max(0.0, slls)
     # Distance from a row's bottom edge to the glyph centre (top-biased placement).
-    glyph_y_in_row  = eff_cell_height - 0.5 * Float64(cell_height)
+    glyph_y_in_row = eff_cell_height - 0.5 * Float64(cell_height)
 
     # Compute cell positions and grid dimensions according to layout.
     local positions::Vector{Tuple{Float64, Float64}}
     cols, rows = if image_layout === :flat
         c, r = _infer_thumbnail_grid_shape(total_cells; ncols = ncols, nrows = nrows)
-        positions = _thumbnail_grid_positions(total_cells, c, r;
-            cell_width, cell_height = eff_cell_height, glyph_y_in_row)
+        positions = _thumbnail_grid_positions(
+            total_cells, c, r;
+            cell_width, cell_height = eff_cell_height, glyph_y_in_row
+        )
         c, r
     elseif image_layout === :blocks
         bc = isnothing(ncols) ? DEFAULT_THUMBNAIL_GRID_MAX_COLUMNS : Int(ncols)
-        positions = _grouped_grid_positions(group_sizes, bc;
-            cell_width, cell_height = eff_cell_height, glyph_y_in_row)
+        positions = _grouped_grid_positions(
+            group_sizes, bc;
+            cell_width, cell_height = eff_cell_height, glyph_y_in_row
+        )
         bc, max(_grouped_grid_total_rows(group_sizes, bc), 1)
     else  # :rows
-        pos, r, c = _rows_grid_positions(group_sizes;
-            cell_width, cell_height = eff_cell_height, glyph_y_in_row)
+        pos, r, c = _rows_grid_positions(
+            group_sizes;
+            cell_width, cell_height = eff_cell_height, glyph_y_in_row
+        )
         positions = pos
         c, r
     end
@@ -752,15 +785,17 @@ function phylopic_thumbnail_grid!(
     glyph_size = Float64(cell_height) * Float64(glyph_fraction) / 2
 
     for i in 1:total_cells
-        x, y  = positions[i]
-        img   = cell_images[i]
+        x, y = positions[i]
+        img = cell_images[i]
         label = labels[i]
 
         if isnothing(img)
             if on_missing === :error
-                throw(ErrorException(
-                    "phylopic_thumbnail_grid!: missing thumbnail for \"$label\"."
-                ))
+                throw(
+                    ErrorException(
+                        "phylopic_thumbnail_grid!: missing thumbnail for \"$label\"."
+                    )
+                )
             elseif on_missing === :placeholder
                 _draw_thumbnail_placeholder!(ax, x, y; glyph_size = glyph_size)
             end
@@ -805,7 +840,7 @@ function phylopic_thumbnail_grid!(
     xmin, xmax, ymin, ymax = _thumbnail_grid_axis_limits(
         cols,
         rows;
-        cell_width  = cell_width,
+        cell_width = cell_width,
         cell_height = eff_cell_height,
     )
     Makie.xlims!(ax, xmin, xmax)
@@ -842,20 +877,20 @@ See [`phylopic_thumbnail_grid!`](@ref) for keyword documentation.
 Returns the created `Makie.Figure`.
 """
 function phylopic_thumbnail_grid(
-    cell_images::AbstractVector,
-    labels::AbstractVector{<:AbstractString},
-    group_sizes::AbstractVector{<:Integer};
-    figure_size::Union{Tuple{<:Integer, <:Integer}, Nothing} = nothing,
-    axis = NamedTuple(),
-    ncols::Union{Integer, Nothing} = nothing,
-    kwargs...,
-)::Makie.Figure
+        cell_images::AbstractVector,
+        labels::AbstractVector{<:AbstractString},
+        group_sizes::AbstractVector{<:Integer};
+        figure_size::Union{Tuple{<:Integer, <:Integer}, Nothing} = nothing,
+        axis = NamedTuple(),
+        ncols::Union{Integer, Nothing} = nothing,
+        kwargs...,
+    )::Makie.Figure
     init_cols = isnothing(ncols) ? DEFAULT_THUMBNAIL_GRID_MAX_COLUMNS : Int(ncols)
     init_rows = max(length(cell_images), 1)
 
     init_fig_size = if isnothing(figure_size)
         (
-            init_cols * DEFAULT_THUMBNAIL_GRID_CELL_WIDTH_PX  + DEFAULT_THUMBNAIL_GRID_FIGURE_MARGIN_PX,
+            init_cols * DEFAULT_THUMBNAIL_GRID_CELL_WIDTH_PX + DEFAULT_THUMBNAIL_GRID_FIGURE_MARGIN_PX,
             init_rows * DEFAULT_THUMBNAIL_GRID_CELL_HEIGHT_PX + DEFAULT_THUMBNAIL_GRID_FIGURE_MARGIN_PX,
         )
     else
@@ -863,13 +898,13 @@ function phylopic_thumbnail_grid(
     end
 
     fig = Makie.Figure(size = init_fig_size)
-    ax  = Makie.Axis(fig[1, 1]; axis...)
+    ax = Makie.Axis(fig[1, 1]; axis...)
     phylopic_thumbnail_grid!(ax, cell_images, labels, group_sizes; ncols, kwargs...)
 
     if isnothing(figure_size)
         xhi = Float64(ax.limits[][1][2])
         yhi = Float64(ax.limits[][2][2])
-        px_per_w = Float64(DEFAULT_THUMBNAIL_GRID_CELL_WIDTH_PX)  / DEFAULT_THUMBNAIL_GRID_CELL_WIDTH
+        px_per_w = Float64(DEFAULT_THUMBNAIL_GRID_CELL_WIDTH_PX) / DEFAULT_THUMBNAIL_GRID_CELL_WIDTH
         px_per_h = Float64(DEFAULT_THUMBNAIL_GRID_CELL_HEIGHT_PX) / DEFAULT_THUMBNAIL_GRID_CELL_HEIGHT
         new_w = round(Int, xhi * px_per_w) + DEFAULT_THUMBNAIL_GRID_FIGURE_MARGIN_PX
         new_h = round(Int, yhi * px_per_h) + DEFAULT_THUMBNAIL_GRID_FIGURE_MARGIN_PX

@@ -42,20 +42,20 @@ uuid = resolve_node(
 ```
 """
 function resolve_node(
-    authority::AbstractString,
-    namespace::AbstractString,
-    object_ids::AbstractVector{<:AbstractString};
-    build::Union{Int, Nothing} = nothing,
-)::Union{String, Nothing}
+        authority::AbstractString,
+        namespace::AbstractString,
+        object_ids::AbstractVector{<:AbstractString};
+        build::Union{Int, Nothing} = nothing,
+    )::Union{String, Nothing}
     isempty(object_ids) && return nothing
 
-    b       = ensure_build(build)
+    b = ensure_build(build)
     ids_str = join(object_ids, ",")
-    url     = "$PHYLOPIC_BASE_URL/resolve/$authority/$namespace" *
-              "?build=$b&objectIDs=$ids_str"
+    url = "$PHYLOPIC_BASE_URL/resolve/$authority/$namespace" *
+        "?build=$b&objectIDs=$ids_str"
     try
         resp = phylopic_get(url)
-        obj  = JSON3.read(resp.body)
+        obj = JSON3.read(resp.body)
 
         # HTTP.jl follows the 308 redirect to the /nodes/{uuid} endpoint.
         # The final response body includes a top-level :uuid field.
@@ -105,9 +105,9 @@ uuid = resolve_pbdb_node([133360, 133359, 39168, 37177])
 ```
 """
 function resolve_pbdb_node(
-    pbdb_ids::AbstractVector{<:Integer};
-    build::Union{Int, Nothing} = nothing,
-)::Union{String, Nothing}
+        pbdb_ids::AbstractVector{<:Integer};
+        build::Union{Int, Nothing} = nothing,
+    )::Union{String, Nothing}
     isempty(pbdb_ids) && return nothing
     return resolve_node(
         "paleobiodb.org",

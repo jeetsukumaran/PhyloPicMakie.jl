@@ -42,10 +42,10 @@ resp.status  # 204
 ```
 """
 function phylopic_get(
-    url::AbstractString;
-    retries::Int    = 3,
-    readtimeout::Int = 30,
-)::HTTP.Response
+        url::AbstractString;
+        retries::Int = 3,
+        readtimeout::Int = 30,
+    )::HTTP.Response
     last_err = nothing
     for attempt in 1:retries
         try

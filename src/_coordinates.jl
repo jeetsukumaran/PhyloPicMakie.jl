@@ -1,4 +1,3 @@
-
 """
 Valid placement symbols for the anchor corner/edge on the glyph.
 """
@@ -48,19 +47,21 @@ const VALID_ROTATIONS_DEG = (0.0, 90.0, 180.0, 270.0, -90.0, -180.0, -270.0)
 #  :bottomright→ (-0.5, +0.5)
 #
 function _placement_offsets(placement::Symbol)::Tuple{Float64, Float64}
-    placement === :center      && return (0.0,   0.0)
-    placement === :left        && return (0.5,   0.0)
-    placement === :right       && return (-0.5,  0.0)
-    placement === :top         && return (0.0,  -0.5)
-    placement === :bottom      && return (0.0,   0.5)
-    placement === :topleft     && return (0.5,  -0.5)
+    placement === :center      && return (0.0, 0.0)
+    placement === :left        && return (0.5, 0.0)
+    placement === :right       && return (-0.5, 0.0)
+    placement === :top         && return (0.0, -0.5)
+    placement === :bottom      && return (0.0, 0.5)
+    placement === :topleft     && return (0.5, -0.5)
     placement === :topright    && return (-0.5, -0.5)
-    placement === :bottomleft  && return (0.5,   0.5)
-    placement === :bottomright && return (-0.5,  0.5)
-    throw(ArgumentError(
-        "augment_phylopic: unknown placement `$placement`. " *
-        "Valid values: $(join(VALID_PLACEMENTS, ", "))."
-    ))
+    placement === :bottomleft  && return (0.5, 0.5)
+    placement === :bottomright && return (-0.5, 0.5)
+    throw(
+        ArgumentError(
+            "augment_phylopic: unknown placement `$placement`. " *
+                "Valid values: $(join(VALID_PLACEMENTS, ", "))."
+        )
+    )
 end
 
 # ---------------------------------------------------------------------------
@@ -118,17 +119,17 @@ bbox = PhyloPicMakie._compute_image_bbox(
 ```
 """
 function _compute_image_bbox(
-    x::Real,
-    y::Real,
-    img_width::Integer,
-    img_height::Integer;
-    glyph_size::Real,
-    aspect::Symbol,
-    placement::Symbol,
-    xoffset::Real,
-    yoffset::Real,
-    axis_scale_correction::Real = 1.0,
-)::NTuple{4, Float64}
+        x::Real,
+        y::Real,
+        img_width::Integer,
+        img_height::Integer;
+        glyph_size::Real,
+        aspect::Symbol,
+        placement::Symbol,
+        xoffset::Real,
+        yoffset::Real,
+        axis_scale_correction::Real = 1.0,
+    )::NTuple{4, Float64}
     half_h = Float64(glyph_size)
 
     half_w = if aspect === :preserve
@@ -137,10 +138,12 @@ function _compute_image_bbox(
     elseif aspect === :stretch
         half_h
     else
-        throw(ArgumentError(
-            "augment_phylopic: unknown aspect `$aspect`. " *
-            "Valid values: :preserve, :stretch."
-        ))
+        throw(
+            ArgumentError(
+                "augment_phylopic: unknown aspect `$aspect`. " *
+                    "Valid values: :preserve, :stretch."
+            )
+        )
     end
 
     # Base bounding box centred at origin, then shift to (x, y)
@@ -183,10 +186,12 @@ function _apply_rotation(img::AbstractMatrix, rotation_deg::Real)::AbstractMatri
     deg ≈ 90.0  && return rotr90(img)
     deg ≈ 180.0 && return rot180(img)
     deg ≈ 270.0 && return rotl90(img)
-    throw(ArgumentError(
-        "augment_phylopic: rotation must be a multiple of 90 degrees. " *
-        "Got $(rotation_deg) degrees. Arbitrary angles are not yet supported."
-    ))
+    throw(
+        ArgumentError(
+            "augment_phylopic: rotation must be a multiple of 90 degrees. " *
+                "Got $(rotation_deg) degrees. Arbitrary angles are not yet supported."
+        )
+    )
 end
 
 # ---------------------------------------------------------------------------
@@ -216,10 +221,12 @@ function _range_anchor(xstart::Real, xstop::Real, at::Symbol)::Float64
     at === :start    && return Float64(xstart)
     at === :stop     && return Float64(xstop)
     at === :midpoint && return (Float64(xstart) + Float64(xstop)) / 2.0
-    throw(ArgumentError(
-        "augment_phylopic_ranges: unknown `at` value `$at`. " *
-        "Valid values: $(join(VALID_AT_POSITIONS, ", "))."
-    ))
+    throw(
+        ArgumentError(
+            "augment_phylopic_ranges: unknown `at` value `$at`. " *
+                "Valid values: $(join(VALID_AT_POSITIONS, ", "))."
+        )
+    )
 end
 
 # ---------------------------------------------------------------------------

@@ -53,11 +53,11 @@ result = batch_primary_images(uuids)
 ```
 """
 function batch_primary_images(
-    node_uuids::AbstractVector{<:AbstractString};
-    build::Union{Int, Nothing} = nothing,
-    add_node_name::Bool        = false,
-)::Dict{String, Union{PhyloPicImage, Nothing}}
-    b            = ensure_build(build)
+        node_uuids::AbstractVector{<:AbstractString};
+        build::Union{Int, Nothing} = nothing,
+        add_node_name::Bool = false,
+    )::Dict{String, Union{PhyloPicImage, Nothing}}
+    b = ensure_build(build)
     unique_uuids = unique(node_uuids)
 
     out = Dict{String, Union{PhyloPicImage, Nothing}}()
@@ -114,28 +114,31 @@ length(result["8f901db5-84c1-4dc0-93ba-2300eeddf4ab"])  # ≤ 60
 ```
 """
 function batch_images(
-    node_uuids::AbstractVector{<:AbstractString};
-    build::Union{Int, Nothing}     = nothing,
-    filter::Symbol                 = :clade,
-    max_pages::Union{Int, Nothing} = nothing,
-    add_node_name::Bool            = false,
-)::Dict{String, Vector{PhyloPicImage}}
-    b            = ensure_build(build)
+        node_uuids::AbstractVector{<:AbstractString};
+        build::Union{Int, Nothing} = nothing,
+        filter::Symbol = :clade,
+        max_pages::Union{Int, Nothing} = nothing,
+        add_node_name::Bool = false,
+    )::Dict{String, Vector{PhyloPicImage}}
+    b = ensure_build(build)
     unique_uuids = unique(node_uuids)
 
     out = Dict{String, Vector{PhyloPicImage}}()
     for uuid in unique_uuids
         imgs = autocache(
-            () -> fetch_images(uuid;
-                build         = b,
-                filter        = filter,
-                max_pages     = max_pages,
+            () -> fetch_images(
+                uuid;
+                build = b,
+                filter = filter,
+                max_pages = max_pages,
                 add_node_name = add_node_name,
             ),
             batch_images,
             "phylopic/images",
-            (; uuid = uuid, build = b, filter = filter, max_pages = max_pages,
-               add_node_name = add_node_name),
+            (;
+                uuid = uuid, build = b, filter = filter, max_pages = max_pages,
+                add_node_name = add_node_name,
+            ),
         )
         out[uuid] = imgs
     end

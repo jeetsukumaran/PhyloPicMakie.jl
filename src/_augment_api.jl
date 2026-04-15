@@ -1,4 +1,3 @@
-
 # ---------------------------------------------------------------------------
 # PhyloPicMakie — PhyloPic-native public augment_phylopic! API
 #
@@ -41,25 +40,31 @@ range.
 function _extract_column(table, col_selector)::AbstractVector
     if col_selector isa Symbol
         available = propertynames(table)
-        col_selector ∈ available || throw(ArgumentError(
-            "column `:$col_selector` not found. " *
-            "Available columns: " * join(string.(Symbol.(":", available)), ", ") * "."
-        ))
+        col_selector ∈ available || throw(
+            ArgumentError(
+                "column `:$col_selector` not found. " *
+                    "Available columns: " * join(string.(Symbol.(":", available)), ", ") * "."
+            )
+        )
         return getproperty(table, col_selector)
     elseif col_selector isa AbstractString
         return _extract_column(table, Symbol(col_selector))
     elseif col_selector isa Integer
         available = propertynames(table)
-        1 ≤ col_selector ≤ length(available) || throw(ArgumentError(
-            "column index $col_selector is out of range " *
-            "(table has $(length(available)) columns)."
-        ))
+        1 ≤ col_selector ≤ length(available) || throw(
+            ArgumentError(
+                "column index $col_selector is out of range " *
+                    "(table has $(length(available)) columns)."
+            )
+        )
         return getproperty(table, available[col_selector])
     else
-        throw(ArgumentError(
-            "column selector must be a Symbol, String, or Integer. " *
-            "Got $(typeof(col_selector))."
-        ))
+        throw(
+            ArgumentError(
+                "column selector must be a Symbol, String, or Integer. " *
+                    "Got $(typeof(col_selector))."
+            )
+        )
     end
 end
 
@@ -165,38 +170,42 @@ augment_phylopic!(
 ```
 """
 function augment_phylopic!(
-    ax::Makie.Axis,
-    x::AbstractVector{<:Real},
-    y::AbstractVector{<:Real};
-    node_uuid::Union{AbstractVector, Nothing} = nothing,
-    glyph::Union{AbstractMatrix, Nothing} = nothing,
-    placement::Symbol = :center,
-    xoffset::Real = 0.0,
-    yoffset::Real = 0.0,
-    glyph_size::Real = 0.4,
-    aspect::Symbol = :preserve,
-    rotation::Real = 0.0,
-    mirror::Bool = false,
-    image_rendering::Symbol = :thumbnail,
-    on_missing::Symbol = :skip,
-)::Nothing
+        ax::Makie.Axis,
+        x::AbstractVector{<:Real},
+        y::AbstractVector{<:Real};
+        node_uuid::Union{AbstractVector, Nothing} = nothing,
+        glyph::Union{AbstractMatrix, Nothing} = nothing,
+        placement::Symbol = :center,
+        xoffset::Real = 0.0,
+        yoffset::Real = 0.0,
+        glyph_size::Real = 0.4,
+        aspect::Symbol = :preserve,
+        rotation::Real = 0.0,
+        mirror::Bool = false,
+        image_rendering::Symbol = :thumbnail,
+        on_missing::Symbol = :skip,
+    )::Nothing
     n = length(x)
-    length(y) == n || throw(ArgumentError(
-        "augment_phylopic!: `x` and `y` must have the same length."
-    ))
-    isnothing(node_uuid) && isnothing(glyph) && throw(ArgumentError(
-        "augment_phylopic!: one of `node_uuid` or `glyph` must be provided."
-    ))
+    length(y) == n || throw(
+        ArgumentError(
+            "augment_phylopic!: `x` and `y` must have the same length."
+        )
+    )
+    isnothing(node_uuid) && isnothing(glyph) && throw(
+        ArgumentError(
+            "augment_phylopic!: one of `node_uuid` or `glyph` must be provided."
+        )
+    )
     images = _resolve_images_by_uuid(node_uuid, glyph, n; image_rendering)
-    augment_phylopic!(
+    return augment_phylopic!(
         ax, x, y, images;
         glyph_size = glyph_size,
-        aspect     = aspect,
-        placement  = placement,
-        xoffset    = xoffset,
-        yoffset    = yoffset,
-        rotation   = rotation,
-        mirror     = mirror,
+        aspect = aspect,
+        placement = placement,
+        xoffset = xoffset,
+        yoffset = yoffset,
+        rotation = rotation,
+        mirror = mirror,
         on_missing = on_missing,
     )
 end
@@ -218,12 +227,12 @@ provided for naming symmetry.
 See [`augment_phylopic!`](@ref) for the full keyword-argument documentation.
 """
 function augment_phylopic(
-    ax::Makie.Axis,
-    x::AbstractVector{<:Real},
-    y::AbstractVector{<:Real};
-    kwargs...,
-)::Nothing
-    augment_phylopic!(ax, x, y; kwargs...)
+        ax::Makie.Axis,
+        x::AbstractVector{<:Real},
+        y::AbstractVector{<:Real};
+        kwargs...,
+    )::Nothing
+    return augment_phylopic!(ax, x, y; kwargs...)
 end
 
 # ---------------------------------------------------------------------------
@@ -287,22 +296,26 @@ augment_phylopic_ranges!(
 ```
 """
 function augment_phylopic_ranges!(
-    ax::Makie.Axis,
-    xstart::AbstractVector{<:Real},
-    xstop::AbstractVector{<:Real},
-    y::AbstractVector{<:Real};
-    at::Symbol = :start,
-    kwargs...,
-)::Nothing
+        ax::Makie.Axis,
+        xstart::AbstractVector{<:Real},
+        xstop::AbstractVector{<:Real},
+        y::AbstractVector{<:Real};
+        at::Symbol = :start,
+        kwargs...,
+    )::Nothing
     n = length(xstart)
-    length(xstop) == n || throw(ArgumentError(
-        "augment_phylopic_ranges!: `xstart` and `xstop` must have the same length."
-    ))
-    length(y) == n || throw(ArgumentError(
-        "augment_phylopic_ranges!: `y` must have the same length as `xstart`."
-    ))
+    length(xstop) == n || throw(
+        ArgumentError(
+            "augment_phylopic_ranges!: `xstart` and `xstop` must have the same length."
+        )
+    )
+    length(y) == n || throw(
+        ArgumentError(
+            "augment_phylopic_ranges!: `y` must have the same length as `xstart`."
+        )
+    )
     xs = [_range_anchor(Float64(xstart[i]), Float64(xstop[i]), at) for i in 1:n]
-    augment_phylopic!(ax, xs, y; kwargs...)
+    return augment_phylopic!(ax, xs, y; kwargs...)
 end
 
 """
@@ -319,13 +332,13 @@ Non-mutating alias for [`augment_phylopic_ranges!`](@ref).
 See [`augment_phylopic_ranges!`](@ref) for full documentation.
 """
 function augment_phylopic_ranges(
-    ax::Makie.Axis,
-    xstart::AbstractVector{<:Real},
-    xstop::AbstractVector{<:Real},
-    y::AbstractVector{<:Real};
-    kwargs...,
-)::Nothing
-    augment_phylopic_ranges!(ax, xstart, xstop, y; kwargs...)
+        ax::Makie.Axis,
+        xstart::AbstractVector{<:Real},
+        xstop::AbstractVector{<:Real},
+        y::AbstractVector{<:Real};
+        kwargs...,
+    )::Nothing
+    return augment_phylopic_ranges!(ax, xstart, xstop, y; kwargs...)
 end
 
 # ---------------------------------------------------------------------------
@@ -381,18 +394,18 @@ augment_phylopic!(ax, df; x = :x, y = :y, node_uuid = :uuid, glyph_size = 0.4)
 ```
 """
 function augment_phylopic!(
-    ax::Makie.Axis,
-    table;
-    x,
-    y,
-    node_uuid = nothing,
-    glyph::Union{AbstractMatrix, Nothing} = nothing,
-    kwargs...,
-)::Nothing
-    xs    = _extract_column(table, x)
-    ys    = _extract_column(table, y)
+        ax::Makie.Axis,
+        table;
+        x,
+        y,
+        node_uuid = nothing,
+        glyph::Union{AbstractMatrix, Nothing} = nothing,
+        kwargs...,
+    )::Nothing
+    xs = _extract_column(table, x)
+    ys = _extract_column(table, y)
     uuids = isnothing(node_uuid) ? nothing : _extract_column(table, node_uuid)
-    augment_phylopic!(ax, xs, ys; node_uuid = uuids, glyph = glyph, kwargs...)
+    return augment_phylopic!(ax, xs, ys; node_uuid = uuids, glyph = glyph, kwargs...)
 end
 
 """
@@ -403,7 +416,7 @@ Non-mutating alias for the table-based [`augment_phylopic!`](@ref).
 See [`augment_phylopic!`](@ref) for full documentation.
 """
 function augment_phylopic(ax::Makie.Axis, table; kwargs...)::Nothing
-    augment_phylopic!(ax, table; kwargs...)
+    return augment_phylopic!(ax, table; kwargs...)
 end
 
 # ---------------------------------------------------------------------------
@@ -470,21 +483,21 @@ augment_phylopic_ranges!(
 ```
 """
 function augment_phylopic_ranges!(
-    ax::Makie.Axis,
-    table;
-    xstart,
-    xstop,
-    y,
-    node_uuid = nothing,
-    glyph::Union{AbstractMatrix, Nothing} = nothing,
-    at::Symbol = :start,
-    kwargs...,
-)::Nothing
-    xs    = _extract_column(table, xstart)
-    xe    = _extract_column(table, xstop)
-    ys    = _extract_column(table, y)
+        ax::Makie.Axis,
+        table;
+        xstart,
+        xstop,
+        y,
+        node_uuid = nothing,
+        glyph::Union{AbstractMatrix, Nothing} = nothing,
+        at::Symbol = :start,
+        kwargs...,
+    )::Nothing
+    xs = _extract_column(table, xstart)
+    xe = _extract_column(table, xstop)
+    ys = _extract_column(table, y)
     uuids = isnothing(node_uuid) ? nothing : _extract_column(table, node_uuid)
-    augment_phylopic_ranges!(ax, xs, xe, ys; node_uuid = uuids, glyph = glyph, at = at, kwargs...)
+    return augment_phylopic_ranges!(ax, xs, xe, ys; node_uuid = uuids, glyph = glyph, at = at, kwargs...)
 end
 
 """
@@ -495,5 +508,5 @@ Non-mutating alias for the table-based [`augment_phylopic_ranges!`](@ref).
 See [`augment_phylopic_ranges!`](@ref) for full documentation.
 """
 function augment_phylopic_ranges(ax::Makie.Axis, table; kwargs...)::Nothing
-    augment_phylopic_ranges!(ax, table; kwargs...)
+    return augment_phylopic_ranges!(ax, table; kwargs...)
 end

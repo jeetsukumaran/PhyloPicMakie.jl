@@ -130,7 +130,7 @@ function _cc_license_label(license_url::AbstractString)::String
     m = match(r"creativecommons\.org/licenses/([^/]+)/([^/]+)", license_url)
     if !isnothing(m)
         parts = uppercase(replace(m.captures[1], "-" => " "))
-        ver   = m.captures[2]
+        ver = m.captures[2]
         return "CC $parts $ver"
     end
     m2 = match(r"creativecommons\.org/publicdomain/([^/]+)/([^/]+)", license_url)
@@ -205,7 +205,11 @@ and is safe to call in tests with synthetic objects.
 - `build`: the PhyloPic build index to associate with the returned record.
 """
 function _parse_node_json(obj, build::Int)::PhyloPicNode
-    uuid = try string(obj.uuid) catch; "" end
+    uuid = try
+        string(obj.uuid)
+    catch
+        ""
+    end
 
     # Preferred name: first entry in names array, scientific class preferred.
     all_names = String[]
@@ -236,7 +240,7 @@ function _parse_node_json(obj, build::Int)::PhyloPicNode
             href = string(lnk.href)
             # href is of the form "/nodes/<uuid>?build=..."
             path = first(split(href, '?'))
-            pu   = last(split(path, '/'))
+            pu = last(split(path, '/'))
             isempty(pu) || (parent_uuid = pu)
         end
     catch
@@ -248,17 +252,21 @@ function _parse_node_json(obj, build::Int)::PhyloPicNode
         if !isnothing(pi_link)
             href = string(pi_link.href)
             path = first(split(href, '?'))
-            piu  = last(split(path, '/'))
+            piu = last(split(path, '/'))
             isempty(piu) || (primary_image_uuid = piu)
         end
     catch
     end
 
     clade_href = ""
-    try clade_href = string(obj._links.cladeImages.href) catch end
+    try
+        clade_href = string(obj._links.cladeImages.href)
+    catch end
 
     images_href = ""
-    try images_href = string(obj._links.images.href) catch end
+    try
+        images_href = string(obj._links.images.href)
+    catch end
 
     return PhyloPicNode(
         uuid,
@@ -287,33 +295,51 @@ This function is pure: it only reads from `obj` and `build`, performs no I/O.
 - `build`: the PhyloPic build index to associate with the returned record.
 """
 function _parse_image_json(obj, build::Int)::PhyloPicImage
-    uuid = try string(obj.uuid) catch; "" end
+    uuid = try
+        string(obj.uuid)
+    catch
+        ""
+    end
 
     links = nothing
-    try links = obj._links catch end
+    try
+        links = obj._links
+    catch end
 
-    thumbnail_url   = missing
-    vector_url      = missing
-    raster_url      = missing
+    thumbnail_url = missing
+    vector_url = missing
+    raster_url = missing
     source_file_url = missing
-    og_image_url    = missing
-    license_url     = missing
-    license         = missing
+    og_image_url = missing
+    license_url = missing
+    license = missing
     contributor_href = missing
     specific_node_uuid = nothing
-    general_node_uuid  = nothing
+    general_node_uuid = nothing
 
     if !isnothing(links)
-        try thumbnail_url   = _largest_file_href(links.thumbnailFiles) catch end
-        try vector_url      = string(links.vectorFile.href)             catch end
-        try raster_url      = _largest_file_href(links.rasterFiles)    catch end
-        try source_file_url = string(links.sourceFile.href)            catch end
-        try og_image_url    = string(links["http://ogp.me/ns#image"].href) catch end
-        try contributor_href = string(links.contributor.href)           catch end
         try
-            lu          = string(links.license.href)
+            thumbnail_url = _largest_file_href(links.thumbnailFiles)
+        catch end
+        try
+            vector_url = string(links.vectorFile.href)
+        catch end
+        try
+            raster_url = _largest_file_href(links.rasterFiles)
+        catch end
+        try
+            source_file_url = string(links.sourceFile.href)
+        catch end
+        try
+            og_image_url = string(links["http://ogp.me/ns#image"].href)
+        catch end
+        try
+            contributor_href = string(links.contributor.href)
+        catch end
+        try
+            lu = string(links.license.href)
             license_url = lu
-            license     = _cc_license_label(lu)
+            license = _cc_license_label(lu)
         catch end
         try
             sn = links.specificNode
@@ -337,7 +363,9 @@ function _parse_image_json(obj, build::Int)::PhyloPicImage
 
     # attribution may also be at the top level
     attribution = missing
-    try attribution = string(obj.attribution) catch end
+    try
+        attribution = string(obj.attribution)
+    catch end
 
     return PhyloPicImage(
         uuid,
@@ -411,9 +439,9 @@ img2.uuid == img.uuid   # → true
 ```
 """
 function _with_node_name(
-    img::PhyloPicImage,
-    name::Union{String, Nothing},
-)::PhyloPicImage
+        img::PhyloPicImage,
+        name::Union{String, Nothing},
+    )::PhyloPicImage
     return PhyloPicImage(
         img.uuid,
         img.build,

@@ -1,4 +1,3 @@
-
 # ---------------------------------------------------------------------------
 # PhyloPicMakie — core rendering loop
 #
@@ -55,28 +54,32 @@ rendered images maintain their correct pixel-space aspect ratio on
 anisotropic axes.
 """
 function augment_phylopic!(
-    ax::Makie.Axis,
-    xs::AbstractVector{<:Real},
-    ys::AbstractVector{<:Real},
-    images::AbstractVector;
-    glyph_size::Real,
-    aspect::Symbol,
-    placement::Symbol,
-    xoffset::Real,
-    yoffset::Real,
-    rotation::Real,
-    mirror::Bool,
-    on_missing::Symbol,
-)::Nothing
-    on_missing ∈ VALID_ON_MISSING || throw(ArgumentError(
-        "augment_phylopic: unknown `on_missing` value `$on_missing`. " *
-        "Valid values: $(join(VALID_ON_MISSING, ", "))."
-    ))
+        ax::Makie.Axis,
+        xs::AbstractVector{<:Real},
+        ys::AbstractVector{<:Real},
+        images::AbstractVector;
+        glyph_size::Real,
+        aspect::Symbol,
+        placement::Symbol,
+        xoffset::Real,
+        yoffset::Real,
+        rotation::Real,
+        mirror::Bool,
+        on_missing::Symbol,
+    )::Nothing
+    on_missing ∈ VALID_ON_MISSING || throw(
+        ArgumentError(
+            "augment_phylopic: unknown `on_missing` value `$on_missing`. " *
+                "Valid values: $(join(VALID_ON_MISSING, ", "))."
+        )
+    )
 
     n = length(xs)
-    n == length(ys) == length(images) || throw(ArgumentError(
-        "augment_phylopic: xs, ys, and images must all have the same length."
-    ))
+    n == length(ys) == length(images) || throw(
+        ArgumentError(
+            "augment_phylopic: xs, ys, and images must all have the same length."
+        )
+    )
 
     # Reactive scale correction: recomputes whenever the axis limits or
     # viewport change.  The x-range of :preserve images lifts on this
@@ -89,10 +92,12 @@ function augment_phylopic!(
 
         if isnothing(img)
             if on_missing === :error
-                throw(ErrorException(
-                    "augment_phylopic: missing image for data point $i " *
-                    "(on_missing = :error)."
-                ))
+                throw(
+                    ErrorException(
+                        "augment_phylopic: missing image for data point $i " *
+                            "(on_missing = :error)."
+                    )
+                )
             elseif on_missing === :placeholder
                 # Draw a small grey rectangle as a stand-in.  The placeholder
                 # is intentionally square (aspect = :stretch) regardless of
@@ -217,21 +222,25 @@ then calls [`augment_phylopic!`](@ref).
 `Nothing`.
 """
 function augment_phylopic_ranges!(
-    ax::Makie.Axis,
-    xstart::AbstractVector{<:Real},
-    xstop::AbstractVector{<:Real},
-    y::AbstractVector{<:Real},
-    images::AbstractVector;
-    at::Symbol = :midpoint,
-    kwargs...,
-)::Nothing
+        ax::Makie.Axis,
+        xstart::AbstractVector{<:Real},
+        xstop::AbstractVector{<:Real},
+        y::AbstractVector{<:Real},
+        images::AbstractVector;
+        at::Symbol = :midpoint,
+        kwargs...,
+    )::Nothing
     n = length(y)
-    length(xstart) == n || throw(ArgumentError(
-        "augment_phylopic_ranges!: `xstart` and `y` must have the same length."
-    ))
-    length(xstop) == n || throw(ArgumentError(
-        "augment_phylopic_ranges!: `xstop` and `y` must have the same length."
-    ))
+    length(xstart) == n || throw(
+        ArgumentError(
+            "augment_phylopic_ranges!: `xstart` and `y` must have the same length."
+        )
+    )
+    length(xstop) == n || throw(
+        ArgumentError(
+            "augment_phylopic_ranges!: `xstop` and `y` must have the same length."
+        )
+    )
     xs = [_range_anchor(Float64(xstart[i]), Float64(xstop[i]), at) for i in 1:n]
     augment_phylopic!(ax, xs, y, images; kwargs...)
     return nothing
