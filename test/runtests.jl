@@ -9,9 +9,8 @@
 #   3. Code quality: Aqua + JET
 
 using Test
-using PhyloPicMakie
-import Makie
 using CairoMakie
+using PhyloPicMakie
 
 # PhyloPicDB is a hard dep of PhyloPicMakie and accessible as a nested module.
 const PhyloPicDB = PhyloPicMakie.PhyloPicDB
