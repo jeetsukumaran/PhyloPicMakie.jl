@@ -14,6 +14,10 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
+        "API Reference" => [
+            "Rendering"  => "api/rendering.md",
+            "PhyloPicDB" => "api/phylopic_db.md",
+        ],
     ],
 )
 
