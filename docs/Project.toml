@@ -4,3 +4,6 @@ PhyloPicMakie = "29f7fcc2-58b8-448e-949b-ed9dd2d8a249"
 
 [sources]
 PhyloPicMakie = {path = ".."}
+
+[compat]
+Documenter = "1.17.0"
