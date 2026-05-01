@@ -8,6 +8,11 @@ Documentation for [PhyloPicMakie](https://github.com/jeetsukumaran/PhyloPicMakie
 
 `PhyloPicMakie` provides Julia tools for working with [PhyloPic](https://www.phylopic.org/) silhouette images in Makie plots.
 
+The package owns a generic anchored-overlay foundation for PhyloPic glyphs.
+Public explicit-coordinate helpers use that same substrate internally, and
+packages with rendered-object or projected-anchor workflows can build on the
+same owner layer without reimplementing Makie projection logic.
+
 ## Packages
 
 | Module | Description |

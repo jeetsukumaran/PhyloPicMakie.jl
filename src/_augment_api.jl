@@ -18,6 +18,7 @@
 #   augment_phylopic_ranges! / augment_phylopic_ranges  (range table API)
 #       └─► _resolve_images_by_uuid(node_uuids, glyph, n; image_rendering)
 #               └─► augment_phylopic!(ax, xs, ys, images; ...)  [_render_core.jl]
+#                       └─► _augment_phylopic_anchored!(...)   [_anchored_overlay.jl]
 # ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
@@ -148,7 +149,8 @@ PhyloPic node UUIDs (strings).  For PBDB taxon-name resolution use
 
 ## Returns
 
-`Nothing`.  The glyphs are added as side-effects to `ax`.
+`Nothing`.  The glyphs are added as side-effects to `ax` through the shared
+internal anchored-overlay substrate.
 
 ## Examples
 

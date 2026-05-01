@@ -18,8 +18,19 @@
 # augment_phylopic! accepts AbstractVector of images with no element-type constraint.
 const _TEST_IMG = fill(0.5f0, 4, 8)
 
-# Count Image plots currently added to an axis.
-_count_images(ax) = count(p -> p isa Image, ax.scene.plots)
+_materialize!(fig) = CairoMakie.Makie.update_state_before_display!(fig)
+
+function _overlay_plots(ax)
+    return filter(ax.scene.plots) do plot
+        hasproperty(plot, :marker) || return false
+        marker = plot.marker[]
+        marker isa AbstractVector || return false
+        isempty(marker) && return false
+        return first(marker) isa AbstractMatrix
+    end
+end
+
+_count_glyph_overlays(ax) = length(_overlay_plots(ax))
 
 # Shared keyword args for the generic augment_phylopic! (no defaults).
 const _AUGMENT_KW = (
@@ -39,26 +50,28 @@ const _AUGMENT_KW = (
 
 @testset "PhyloPicMakie — augment_phylopic! (pre-resolved images)" begin
 
-    @testset "nothing image, on_missing=:skip → no images added" begin
+    @testset "nothing image, on_missing=:skip -> no glyph overlay added" begin
         fig = Figure(); ax = Axis(fig[1, 1])
         PhyloPicMakie.augment_phylopic!(ax, [0.0], [0.0], [nothing];
             _AUGMENT_KW..., on_missing = :skip)
-        @test _count_images(ax) == 0
+        _materialize!(fig)
+        @test _count_glyph_overlays(ax) == 0
     end
 
-    @testset "nothing image, on_missing=:placeholder → placeholder poly added" begin
+    @testset "nothing image, on_missing=:placeholder -> placeholder overlay added" begin
         fig = Figure(); ax = Axis(fig[1, 1])
-        n0 = length(ax.scene.plots)
         PhyloPicMakie.augment_phylopic!(ax, [0.0], [0.0], [nothing];
             _AUGMENT_KW..., on_missing = :placeholder)
-        @test length(ax.scene.plots) > n0
+        _materialize!(fig)
+        @test _count_glyph_overlays(ax) == 1
     end
 
     @testset "pre-resolved image matrix rendered without taxon resolution" begin
         fig = Figure(); ax = Axis(fig[1, 1])
         PhyloPicMakie.augment_phylopic!(ax, [0.0], [0.0], [_TEST_IMG];
             _AUGMENT_KW...)
-        @test _count_images(ax) == 1
+        _materialize!(fig)
+        @test _count_glyph_overlays(ax) == 1
     end
 
     @testset "mismatched xs/ys/images length throws ArgumentError" begin
@@ -81,24 +94,26 @@ end  # augment_phylopic! pre-resolved
 
 @testset "PhyloPicMakie — augment_phylopic_ranges! (pre-resolved images)" begin
 
-    @testset "at=:midpoint, pre-resolved image → one image" begin
+    @testset "at=:midpoint, pre-resolved image -> one overlay" begin
         fig = Figure(); ax = Axis(fig[1, 1])
         PhyloPicMakie.augment_phylopic_ranges!(
             ax, [10.0], [20.0], [1.0], [_TEST_IMG];
             glyph_size = 1.0, aspect = :preserve, placement = :center,
             xoffset = 0.0, yoffset = 0.0, rotation = 0.0, mirror = false,
             on_missing = :skip, at = :midpoint)
-        @test _count_images(ax) == 1
+        _materialize!(fig)
+        @test _count_glyph_overlays(ax) == 1
     end
 
-    @testset "at=:start, pre-resolved image → one image" begin
+    @testset "at=:start, pre-resolved image -> one overlay" begin
         fig = Figure(); ax = Axis(fig[1, 1])
         PhyloPicMakie.augment_phylopic_ranges!(
             ax, [10.0], [20.0], [1.0], [_TEST_IMG];
             glyph_size = 1.0, aspect = :preserve, placement = :center,
             xoffset = 0.0, yoffset = 0.0, rotation = 0.0, mirror = false,
             on_missing = :skip, at = :start)
-        @test _count_images(ax) == 1
+        _materialize!(fig)
+        @test _count_glyph_overlays(ax) == 1
     end
 
     @testset "mismatched xstart/xstop throws ArgumentError" begin

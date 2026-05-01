@@ -158,6 +158,45 @@ function _compute_image_bbox(
     return (cx - half_w, cx + half_w, cy - half_h, cy + half_h)
 end
 
+"""
+    _compute_pixel_marker_size(
+        img_width::Integer,
+        img_height::Integer,
+        half_height_px::Real;
+        aspect::Symbol,
+    ) -> Makie.Vec2f
+
+Compute the pixel-space marker size `(width, height)` for a rendered glyph with
+pixel half-height `half_height_px`.
+
+This is the pixel-space analogue of [`_compute_image_bbox`](@ref): it preserves
+image aspect ratio for `:preserve` and yields a square marker for `:stretch`.
+"""
+function _compute_pixel_marker_size(
+        img_width::Integer,
+        img_height::Integer,
+        half_height_px::Real;
+        aspect::Symbol,
+    )::Makie.Vec2f
+    full_height = 2.0f0 * Float32(half_height_px)
+
+    full_width = if aspect === :preserve
+        img_height == 0 ? full_height :
+            full_height * Float32(img_width) / Float32(img_height)
+    elseif aspect === :stretch
+        full_height
+    else
+        throw(
+            ArgumentError(
+                "augment_phylopic: unknown aspect `$aspect`. " *
+                    "Valid values: :preserve, :stretch."
+            )
+        )
+    end
+
+    return Makie.Vec2f(full_width, full_height)
+end
+
 # ---------------------------------------------------------------------------
 # Public: rotation
 # ---------------------------------------------------------------------------

@@ -56,6 +56,7 @@ integrate with PhyloPicMakie (e.g. `PaleobiologyDB.PhyloPicPBDB`,
 | `_load_phylopic_image(url)` | Download + decode + cache a PNG image |
 | `_resolve_images_by_uuid(uuids, glyph, n; ...)` | UUID vector → image matrix vector |
 | `_compute_image_bbox(x, y, w, h; ...)` | Data-space bounding box with scale correction |
+| `_augment_phylopic_anchored!(ax, anchors, images; ...)` | Shared anchored-overlay substrate for data/pixel anchors |
 | `_axis_scale_correction_obs(scene)` | Reactive `(ypx/unit) / (xpx/unit)` correction |
 | `_apply_rotation(img, deg)` | Rotate image matrix by multiples of 90° |
 | `_range_anchor(xstart, xstop, at)` | Resolve range endpoint to an x coordinate |
@@ -87,6 +88,7 @@ export phylopic_thumbnail_grid
 
 include("_image_cache.jl")
 include("_coordinates.jl")
+include("_anchored_overlay.jl")
 include("_render_core.jl")
 include("_thumbnail_grid.jl")
 include("_glyph_resolution.jl")
