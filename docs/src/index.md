@@ -13,6 +13,14 @@ Public explicit-coordinate helpers use that same substrate internally, and
 packages with rendered-object or projected-anchor workflows can build on the
 same owner layer without reimplementing Makie projection logic.
 
+## Example gallery
+
+The repository ships a standalone `examples` environment that demonstrates the
+public overlay interface without any `PaleobiologyDB.jl` dependency. See the
+[Examples](examples.md) page for the deterministic gallery commands, smoke
+verification path, and the rationale for keeping the required examples
+offline-friendly.
+
 ## Packages
 
 | Module | Description |
