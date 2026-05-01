@@ -37,6 +37,36 @@ struct _PixelGlyphSize <: _AbstractGlyphSizeSpec
     half_height::Float64
 end
 
+struct _AnchoredOverlay{P, Ps}
+    visible_plot::P
+    probe_plots::Ps
+end
+
+function Base.getproperty(overlay::_AnchoredOverlay, name::Symbol)
+    if name === :visible_plot || name === :probe_plots
+        return getfield(overlay, name)
+    end
+    return getproperty(getfield(overlay, :visible_plot), name)
+end
+
+function Base.propertynames(overlay::_AnchoredOverlay, private::Bool = false)
+    return (
+        :visible_plot,
+        :probe_plots,
+        propertynames(getfield(overlay, :visible_plot), private)...,
+    )
+end
+
+_owned_plots(overlay::_AnchoredOverlay) = (overlay.visible_plot, overlay.probe_plots...)
+
+function Base.delete!(scene::Makie.Scene, overlay::_AnchoredOverlay)
+    for plot in reverse(_owned_plots(overlay))
+        any(p -> p === plot, scene.plots) || continue
+        delete!(scene, plot)
+    end
+    return overlay
+end
+
 _as_node(x::Makie.Observable) = x
 _as_node(x::AbstractVector) = Makie.Observable(x)
 _as_node(x) = x
@@ -76,13 +106,14 @@ function _glyph_size_spec(glyph_size::Real; glyph_size_space::Symbol)::_Abstract
     )
 end
 
-function _transparent_probe_scatter!(ax::Makie.Axis, positions)
+function _transparent_probe_scatter!(ax::Makie.Axis, positions; visible = true)
     return Makie.scatter!(
         ax,
         positions;
         color = Makie.RGBAf(0, 0, 0, 0),
         markersize = 0,
         strokewidth = 0,
+        visible = visible,
         inspectable = false,
     )
 end
@@ -171,13 +202,14 @@ function _projected_anchor_positions!(
         placement::Symbol,
         xoffset::Real,
         yoffset::Real,
+        visible,
     )
     positions = Makie.lift(
         pos -> _offset_point2f_positions(_normalize_point2f_positions(pos), xoffset, yoffset),
         _as_node(anchor_spec.positions),
     )
 
-    anchor_source = _transparent_probe_scatter!(ax, positions)
+    anchor_source = _transparent_probe_scatter!(ax, positions; visible = visible)
     anchor_pixels = Makie.register_projected_positions!(
         anchor_source;
         input_name = :positions,
@@ -187,11 +219,13 @@ function _projected_anchor_positions!(
 
     upper_source = _transparent_probe_scatter!(
         ax,
-        Makie.lift(pos -> _vertical_probe_positions(pos, glyph_size), positions),
+        Makie.lift(pos -> _vertical_probe_positions(pos, glyph_size), positions);
+        visible = visible,
     )
     lower_source = _transparent_probe_scatter!(
         ax,
-        Makie.lift(pos -> _vertical_probe_positions(pos, -glyph_size), positions),
+        Makie.lift(pos -> _vertical_probe_positions(pos, -glyph_size), positions);
+        visible = visible,
     )
     upper_pixels = Makie.register_projected_positions!(
         upper_source;
@@ -224,7 +258,7 @@ function _projected_anchor_positions!(
             axis_scale_correction = scale_corr,
         )
     end
-    extent_source = _transparent_probe_scatter!(ax, extent_positions)
+    extent_source = _transparent_probe_scatter!(ax, extent_positions; visible = visible)
 
     pixel_positions = Makie.lift(anchor_pixels) do pos
         _normalize_point3f_positions(pos)
@@ -246,6 +280,7 @@ function _projected_anchor_positions!(
         placement::Symbol,
         xoffset::Real,
         yoffset::Real,
+        visible,
     )
     positions = Makie.lift(
         pos -> _offset_point3f_positions(_normalize_point3f_positions(pos), xoffset, yoffset),
@@ -271,7 +306,7 @@ end
         placement::Symbol,
         xoffset::Real,
         yoffset::Real,
-    ) -> Union{Nothing, Makie.Plot}
+    ) -> Union{Nothing, _AnchoredOverlay}
 
 Render pre-resolved image matrices through the internal anchored-overlay
 substrate shared by the public `augment_phylopic!` wrappers and future
@@ -296,7 +331,7 @@ function _augment_phylopic_anchored!(
         placement::Symbol,
         xoffset::Real,
         yoffset::Real,
-    )::Union{Nothing, Makie.Plot}
+    )::Union{Nothing, _AnchoredOverlay}
     isempty(images) && return nothing
 
     anchor_spec = _anchor_positions_spec(anchor_positions; anchor_space)
@@ -309,6 +344,7 @@ function _augment_phylopic_anchored!(
         )
     )
 
+    visible = Makie.Observable(true)
     image_sizes = [(size(img, 2), size(img, 1)) for img in images]
     geometry = _projected_anchor_positions!(
         ax,
@@ -319,6 +355,7 @@ function _augment_phylopic_anchored!(
         placement = placement,
         xoffset = xoffset,
         yoffset = yoffset,
+        visible = visible,
     )
     length(geometry.pixel_positions[]) == length(images) || throw(
         ArgumentError(
@@ -333,7 +370,7 @@ function _augment_phylopic_anchored!(
         _pixel_marker_offsets(sizes; placement)
     end
 
-    return Makie.scatter!(
+    visible_plot = Makie.scatter!(
         ax,
         geometry.pixel_positions;
         marker = images,
@@ -341,7 +378,15 @@ function _augment_phylopic_anchored!(
         marker_offset = marker_offsets,
         markerspace = :pixel,
         space = :pixel,
+        visible = visible,
         inspectable = false,
         transformation = :nothing,
     )
+    for probe_plot in geometry.source_plots
+        Makie.on(probe_plot, visible_plot.visible, update = true) do is_visible
+            probe_plot[:visible] = is_visible
+            return Makie.Consume(false)
+        end
+    end
+    return _AnchoredOverlay(visible_plot, geometry.source_plots)
 end

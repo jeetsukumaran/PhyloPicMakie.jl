@@ -64,6 +64,8 @@ const _AUGMENT_KW = (
             _AUGMENT_KW..., on_missing = :placeholder)
         _materialize!(fig)
         @test _count_glyph_overlays(ax) == 1
+        overlay = only(_overlay_plots(ax))
+        @test only(overlay.marker[]) == PhyloPicMakie._placeholder_glyph()
     end
 
     @testset "pre-resolved image matrix rendered without taxon resolution" begin

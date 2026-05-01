@@ -145,7 +145,7 @@ PhyloPic node UUIDs (strings).  For PBDB taxon-name resolution use
 
 - `on_missing`: how to handle data points for which no image is available.
   `:skip` (default) silently omits the glyph; `:error` throws;
-  `:placeholder` draws a small grey rectangle at the glyph position.
+  `:placeholder` draws a small gray placeholder glyph at the glyph position.
 
 ## Returns
 
