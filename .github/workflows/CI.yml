@@ -42,6 +42,8 @@ jobs:
         shell: julia --color=yes {0}
         run: |
           import Pkg
+          # The examples environment is version-controlled via examples/Project.toml only.
+          # A clean checkout resolves a fresh local Manifest.toml here.
           Pkg.activate("examples")
           Pkg.instantiate()
           include("examples/smoke.jl")

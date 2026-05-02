@@ -15,11 +15,11 @@ function _explicit_anchor_panel!(ax::Axis)::Nothing
     xs = Float64[0.8, 2.0, 3.2, 4.4]
     ys = Float64[1.2, 2.3, 1.8, 2.8]
     labels = ["Marine node", "Avian node", "Fern node", "Mirrored node"]
-    images = [
+    images = Matrix{RGBA{N0f8}}[
         fish_glyph(),
         bird_glyph(),
         fern_glyph(),
-        mirrored_image(bird_glyph(; color = PhyloPicMakie.RGBA{PhyloPicMakie.N0f8}(0.18, 0.22, 0.28, 1.0))),
+        mirrored_image(bird_glyph(; color = RGBA{N0f8}(0.18, 0.22, 0.28, 1.0))),
     ]
 
     lines!(ax, xs, ys; color = (:gray45, 0.45), linewidth = 2.0)
@@ -65,10 +65,10 @@ function _range_anchor_panel!(ax::Axis)::Nothing
     xstop = Float64[3.2, 4.0, 4.8]
     ys = Float64[3.0, 2.0, 1.0]
     labels = ["Shelf interval", "Lagoon interval", "Floodplain interval"]
-    images = [
-        mirrored_image(fish_glyph(; color = PhyloPicMakie.RGBA{PhyloPicMakie.N0f8}(0.12, 0.30, 0.37, 1.0))),
-        bird_glyph(; color = PhyloPicMakie.RGBA{PhyloPicMakie.N0f8}(0.47, 0.24, 0.16, 1.0)),
-        fern_glyph(; color = PhyloPicMakie.RGBA{PhyloPicMakie.N0f8}(0.13, 0.31, 0.15, 1.0)),
+    images = Matrix{RGBA{N0f8}}[
+        mirrored_image(fish_glyph(; color = RGBA{N0f8}(0.12, 0.30, 0.37, 1.0))),
+        bird_glyph(; color = RGBA{N0f8}(0.47, 0.24, 0.16, 1.0)),
+        fern_glyph(; color = RGBA{N0f8}(0.13, 0.31, 0.15, 1.0)),
     ]
 
     for index in eachindex(xstart)

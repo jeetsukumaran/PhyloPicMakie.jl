@@ -1,5 +1,7 @@
 import CairoMakie
 import PhyloPicMakie
+using ColorTypes: RGBA
+using FixedPointNumbers: N0f8
 
 const EXAMPLES_ROOT::String = normpath(joinpath(@__DIR__, ".."))
 const BUILD_ROOT::String = joinpath(EXAMPLES_ROOT, "build")
@@ -31,10 +33,10 @@ function _silhouette_image(
         predicate;
         width::Integer = 240,
         height::Integer = 160,
-        color::PhyloPicMakie.RGBA{PhyloPicMakie.N0f8} = PhyloPicMakie.RGBA{PhyloPicMakie.N0f8}(0.08, 0.10, 0.12, 1.0),
-    )::Matrix{PhyloPicMakie.RGBA{PhyloPicMakie.N0f8}}
+        color::RGBA{N0f8} = RGBA{N0f8}(0.08, 0.10, 0.12, 1.0),
+    )::Matrix{RGBA{N0f8}}
     image = fill(
-        PhyloPicMakie.RGBA{PhyloPicMakie.N0f8}(0.0, 0.0, 0.0, 0.0),
+        RGBA{N0f8}(0.0, 0.0, 0.0, 0.0),
         Int(height),
         Int(width),
     )
@@ -49,8 +51,8 @@ function _silhouette_image(
 end
 
 function fish_glyph(;
-        color::PhyloPicMakie.RGBA{PhyloPicMakie.N0f8} = PhyloPicMakie.RGBA{PhyloPicMakie.N0f8}(0.10, 0.18, 0.32, 1.0),
-    )::Matrix{PhyloPicMakie.RGBA{PhyloPicMakie.N0f8}}
+        color::RGBA{N0f8} = RGBA{N0f8}(0.10, 0.18, 0.32, 1.0),
+    )::Matrix{RGBA{N0f8}}
     return _silhouette_image(; width = 260, height = 150, color) do x, y
         body = ((x + 0.04) / 0.56)^2 + (y / 0.25)^2 <= 1.0
         tail = x < -0.34 && abs(y) <= 0.70 * (x + 0.96)
@@ -62,8 +64,8 @@ function fish_glyph(;
 end
 
 function bird_glyph(;
-        color::PhyloPicMakie.RGBA{PhyloPicMakie.N0f8} = PhyloPicMakie.RGBA{PhyloPicMakie.N0f8}(0.36, 0.16, 0.12, 1.0),
-    )::Matrix{PhyloPicMakie.RGBA{PhyloPicMakie.N0f8}}
+        color::RGBA{N0f8} = RGBA{N0f8}(0.36, 0.16, 0.12, 1.0),
+    )::Matrix{RGBA{N0f8}}
     return _silhouette_image(; width = 240, height = 180, color) do x, y
         body = ((x + 0.02) / 0.44)^2 + ((y + 0.04) / 0.28)^2 <= 1.0
         head = ((x - 0.30) / 0.13)^2 + ((y - 0.12) / 0.13)^2 <= 1.0
@@ -76,8 +78,8 @@ function bird_glyph(;
 end
 
 function fern_glyph(;
-        color::PhyloPicMakie.RGBA{PhyloPicMakie.N0f8} = PhyloPicMakie.RGBA{PhyloPicMakie.N0f8}(0.11, 0.28, 0.17, 1.0),
-    )::Matrix{PhyloPicMakie.RGBA{PhyloPicMakie.N0f8}}
+        color::RGBA{N0f8} = RGBA{N0f8}(0.11, 0.28, 0.17, 1.0),
+    )::Matrix{RGBA{N0f8}}
     return _silhouette_image(; width = 220, height = 220, color) do x, y
         stem = abs(x + 0.04 * y) <= 0.03 && -0.78 <= y <= 0.78
         leaflets = false
@@ -96,8 +98,8 @@ function fern_glyph(;
 end
 
 function mirrored_image(
-        image::Matrix{PhyloPicMakie.RGBA{PhyloPicMakie.N0f8}},
-    )::Matrix{PhyloPicMakie.RGBA{PhyloPicMakie.N0f8}}
+        image::Matrix{RGBA{N0f8}},
+    )::Matrix{RGBA{N0f8}}
     return image[:, end:-1:1]
 end
 

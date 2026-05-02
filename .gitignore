@@ -112,11 +112,13 @@ Manifest.toml
 # Julia REPL command history (optional)
 .julia/logs/repl_history.jl
 
-# IMPORTANT: Keep Julia project and environment files
-# These are essential for reproducibility
+# Local manifests are ignored by default.
+# Existing tracked manifests remain tracked.
+# The examples environment intentionally keeps Manifest.toml local and resolves
+# it from examples/Project.toml on demand.
+#
 # DO NOT IGNORE:
 #   Project.toml
-#   Manifest.toml
 
 # =====================================
 # Editor / IDE-specific files

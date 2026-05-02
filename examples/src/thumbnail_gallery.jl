@@ -5,13 +5,13 @@ include("_common.jl")
 using PhyloPicMakie: phylopic_thumbnail_grid
 
 function main(; output_dir::Union{Nothing, AbstractString} = nothing)::String
-    cell_images = Any[
-        fish_glyph(; color = PhyloPicMakie.RGBA{PhyloPicMakie.N0f8}(0.10, 0.22, 0.34, 1.0)),
-        mirrored_image(fish_glyph(; color = PhyloPicMakie.RGBA{PhyloPicMakie.N0f8}(0.15, 0.32, 0.41, 1.0))),
-        bird_glyph(; color = PhyloPicMakie.RGBA{PhyloPicMakie.N0f8}(0.40, 0.20, 0.13, 1.0)),
-        mirrored_image(bird_glyph(; color = PhyloPicMakie.RGBA{PhyloPicMakie.N0f8}(0.49, 0.27, 0.18, 1.0))),
-        fern_glyph(; color = PhyloPicMakie.RGBA{PhyloPicMakie.N0f8}(0.11, 0.27, 0.15, 1.0)),
-        fern_glyph(; color = PhyloPicMakie.RGBA{PhyloPicMakie.N0f8}(0.18, 0.39, 0.20, 1.0)),
+    cell_images = Matrix{RGBA{N0f8}}[
+        fish_glyph(; color = RGBA{N0f8}(0.10, 0.22, 0.34, 1.0)),
+        mirrored_image(fish_glyph(; color = RGBA{N0f8}(0.15, 0.32, 0.41, 1.0))),
+        bird_glyph(; color = RGBA{N0f8}(0.40, 0.20, 0.13, 1.0)),
+        mirrored_image(bird_glyph(; color = RGBA{N0f8}(0.49, 0.27, 0.18, 1.0))),
+        fern_glyph(; color = RGBA{N0f8}(0.11, 0.27, 0.15, 1.0)),
+        fern_glyph(; color = RGBA{N0f8}(0.18, 0.39, 0.20, 1.0)),
     ]
     labels = String[
         "Marine set\nShelf fish",

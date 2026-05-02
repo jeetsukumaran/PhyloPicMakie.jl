@@ -10,7 +10,7 @@ using PhyloPicMakie: augment_phylopic!
 
 const NodeData = NamedTuple{
     (:display_name, :glyph),
-    Tuple{String, Matrix{PhyloPicMakie.RGBA{PhyloPicMakie.N0f8}}},
+    Tuple{String, Matrix{RGBA{N0f8}}},
 }
 
 function _build_metagraph()::MetaGraph
@@ -32,7 +32,7 @@ function _build_metagraph()::MetaGraph
         (;
             display_name = "Delta",
             glyph = mirrored_image(
-                fish_glyph(; color = PhyloPicMakie.RGBA{PhyloPicMakie.N0f8}(0.12, 0.30, 0.40, 1.0)),
+                fish_glyph(; color = RGBA{N0f8}(0.12, 0.30, 0.40, 1.0)),
             ),
         ),
     )
@@ -41,7 +41,7 @@ function _build_metagraph()::MetaGraph
         :upland,
         (;
             display_name = "Upland",
-            glyph = bird_glyph(; color = PhyloPicMakie.RGBA{PhyloPicMakie.N0f8}(0.44, 0.23, 0.15, 1.0)),
+            glyph = bird_glyph(; color = RGBA{N0f8}(0.44, 0.23, 0.15, 1.0)),
         ),
     )
 
@@ -66,9 +66,9 @@ function main(; output_dir::Union{Nothing, AbstractString} = nothing)::String
     ]
     labels = [label_for(meta_graph, code) for code in 1:nv(graph)]
     display_names = String[meta_graph[label].display_name for label in labels]
-    images = Any[meta_graph[label].glyph for label in labels]
+    images = Matrix{RGBA{N0f8}}[meta_graph[label].glyph for label in labels]
 
-    fig, ax, plot = GraphMakie.graphplot(
+    fig, ax, graph_plot = GraphMakie.graphplot(
         graph;
         layout = fixed_layout,
         node_color = :gray97,
@@ -84,7 +84,10 @@ function main(; output_dir::Union{Nothing, AbstractString} = nothing)::String
     )
 
     materialize!(fig)
-    node_positions = plot[:node_pos][]
+    # This example intentionally snapshots GraphMakie's documented node
+    # positions and then hands those explicit coordinates to the public overlay
+    # API. It does not claim live reactive overlay tracking.
+    node_positions = graph_plot[:node_pos][]
     xs, ys = point_components(node_positions)
     augment_phylopic!(
         ax,
@@ -103,7 +106,7 @@ function main(; output_dir::Union{Nothing, AbstractString} = nothing)::String
 
     hidedecorations!(ax; grid = false)
     hidespines!(ax)
-    ax.title = "GraphMakie node anchors via p[:node_pos]"
+    ax.title = "GraphMakie node-position snapshot hand-off"
 
     return save_example(fig, "graph_anchors"; output_dir)
 end
