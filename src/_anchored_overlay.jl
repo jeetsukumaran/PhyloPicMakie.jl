@@ -59,10 +59,22 @@ end
 
 _owned_plots(overlay::_AnchoredOverlay) = (overlay.visible_plot, overlay.probe_plots...)
 
+function _delete_owned_overlay_plot!(plot)
+    plot_parent = parent(plot)
+    parent_owns_plot = plot_parent isa Makie.Plot && any(child -> child === plot, plot_parent.plots)
+    if parent_owns_plot
+        filter!(child -> child !== plot, plot_parent.plots)
+    end
+
+    scene = Makie.parent_scene(plot)
+    (parent_owns_plot || any(p -> p === plot, scene.plots)) || return nothing
+    delete!(scene, plot)
+    return nothing
+end
+
 function Base.delete!(scene::Makie.Scene, overlay::_AnchoredOverlay)
     for plot in reverse(_owned_plots(overlay))
-        any(p -> p === plot, scene.plots) || continue
-        delete!(scene, plot)
+        _delete_owned_overlay_plot!(plot)
     end
     return overlay
 end
@@ -106,9 +118,9 @@ function _glyph_size_spec(glyph_size::Real; glyph_size_space::Symbol)::_Abstract
     )
 end
 
-function _transparent_probe_scatter!(ax::Makie.Axis, positions; visible = true)
+function _transparent_probe_scatter!(parent, positions; visible = true)
     return Makie.scatter!(
-        ax,
+        parent,
         positions;
         color = Makie.RGBAf(0, 0, 0, 0),
         markersize = 0,
@@ -194,7 +206,7 @@ function _pixel_marker_offsets(
 end
 
 function _projected_anchor_positions!(
-        ax::Makie.Axis,
+        parent,
         anchor_spec::_DataAnchors,
         image_sizes::AbstractVector{<:Tuple{<:Integer, <:Integer}};
         glyph_size::Real,
@@ -209,7 +221,7 @@ function _projected_anchor_positions!(
         _as_node(anchor_spec.positions),
     )
 
-    anchor_source = _transparent_probe_scatter!(ax, positions; visible = visible)
+    anchor_source = _transparent_probe_scatter!(parent, positions; visible = visible)
     anchor_pixels = Makie.register_projected_positions!(
         anchor_source;
         input_name = :positions,
@@ -218,12 +230,12 @@ function _projected_anchor_positions!(
     )
 
     upper_source = _transparent_probe_scatter!(
-        ax,
+        parent,
         Makie.lift(pos -> _vertical_probe_positions(pos, glyph_size), positions);
         visible = visible,
     )
     lower_source = _transparent_probe_scatter!(
-        ax,
+        parent,
         Makie.lift(pos -> _vertical_probe_positions(pos, -glyph_size), positions);
         visible = visible,
     )
@@ -247,7 +259,7 @@ function _projected_anchor_positions!(
         ]
     end
 
-    scale_corr_obs = _axis_scale_correction_obs(ax.scene)
+    scale_corr_obs = _axis_scale_correction_obs(Makie.get_scene(parent))
     extent_positions = Makie.lift(positions, scale_corr_obs) do pos, scale_corr
         _bbox_corner_positions(
             pos,
@@ -258,7 +270,7 @@ function _projected_anchor_positions!(
             axis_scale_correction = scale_corr,
         )
     end
-    extent_source = _transparent_probe_scatter!(ax, extent_positions; visible = visible)
+    extent_source = _transparent_probe_scatter!(parent, extent_positions; visible = visible)
 
     pixel_positions = Makie.lift(anchor_pixels) do pos
         _normalize_point3f_positions(pos)
@@ -272,7 +284,7 @@ function _projected_anchor_positions!(
 end
 
 function _projected_anchor_positions!(
-        ::Makie.Axis,
+        parent,
         anchor_spec::_PixelAnchors,
         image_sizes::AbstractVector{<:Tuple{<:Integer, <:Integer}};
         glyph_size::Real,
@@ -296,7 +308,7 @@ end
 
 """
     _augment_phylopic_anchored!(
-        ax::Makie.Axis,
+        parent,
         anchor_positions,
         images::AbstractVector;
         anchor_space::Symbol,
@@ -321,7 +333,7 @@ Mixed data/pixel combinations currently throw `ArgumentError` so callers do not
 silently mix incompatible contracts.
 """
 function _augment_phylopic_anchored!(
-        ax::Makie.Axis,
+        parent,
         anchor_positions,
         images::AbstractVector;
         anchor_space::Symbol,
@@ -347,7 +359,7 @@ function _augment_phylopic_anchored!(
     visible = Makie.Observable(true)
     image_sizes = [(size(img, 2), size(img, 1)) for img in images]
     geometry = _projected_anchor_positions!(
-        ax,
+        parent,
         anchor_spec,
         image_sizes;
         glyph_size = size_spec.half_height,
@@ -371,7 +383,7 @@ function _augment_phylopic_anchored!(
     end
 
     visible_plot = Makie.scatter!(
-        ax,
+        parent,
         geometry.pixel_positions;
         marker = images,
         markersize = marker_sizes,

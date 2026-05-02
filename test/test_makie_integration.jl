@@ -100,6 +100,32 @@ end
     @test final_limits.widths[1] < visible_limits.widths[1] / 10
 end
 
+@testset "PhyloPicMakie - overlay teardown works when plots are parented to another plot" begin
+    fig = Figure(size = (400, 400))
+    ax = Axis(fig[1, 1])
+    parent_plot = scatter!(ax, [Point2f(0, 0)])
+
+    overlay = PhyloPicMakie._augment_phylopic_anchored!(
+        parent_plot,
+        [Point2f(10, 0)],
+        [_TEST_IMG];
+        anchor_space = :data,
+        glyph_size_space = :data,
+        glyph_size = 1.0,
+        aspect = :preserve,
+        placement = :center,
+        xoffset = 0.0,
+        yoffset = 0.0,
+    )
+    _materialize_integration!(fig)
+
+    @test length(parent_plot.plots) == 5
+
+    delete!(ax.scene, overlay)
+    _materialize_integration!(fig)
+    @test isempty(parent_plot.plots)
+end
+
 @testset "PhyloPicMakie - projected pixel anchors stay tied to rendered markers" begin
     fig = Figure(size = (500, 400))
     ax = Axis(fig[1, 1])

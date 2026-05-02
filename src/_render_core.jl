@@ -16,6 +16,9 @@
 # Public:
 #   augment_phylopic!(ax, xs, ys, images; ...)  → Nothing
 #   augment_phylopic_ranges!(ax, xstarts, xstops, ys, images; ...) → Nothing
+#
+# Internal:
+#   _augment_resolved_phylopic_anchored!(parent, anchors, images; ...) → overlay/nothing
 # ---------------------------------------------------------------------------
 
 import Makie
@@ -60,6 +63,81 @@ function _placeholder_glyph()::Matrix{RGBA{N0f8}}
     return glyph
 end
 
+function _prepared_anchor_positions(anchor_positions, kept_indices::AbstractVector{<:Integer})
+    anchor_positions isa AbstractVector && return anchor_positions[kept_indices]
+    return Makie.lift(pos -> pos[kept_indices], anchor_positions)
+end
+
+function _augment_resolved_phylopic_anchored!(
+        parent,
+        anchor_positions,
+        images::AbstractVector;
+        anchor_space::Symbol,
+        glyph_size_space::Symbol,
+        glyph_size::Real,
+        aspect::Symbol,
+        placement::Symbol,
+        xoffset::Real,
+        yoffset::Real,
+        rotation::Real,
+        mirror::Bool,
+        on_missing::Symbol,
+    )::Union{Nothing, _AnchoredOverlay}
+    on_missing ∈ VALID_ON_MISSING || throw(
+        ArgumentError(
+            "augment_phylopic: unknown `on_missing` value `$on_missing`. " *
+                "Valid values: $(join(VALID_ON_MISSING, ", "))."
+        )
+    )
+
+    kept_indices = Int[]
+    rendered_images = AbstractMatrix[]
+    sizehint!(kept_indices, length(images))
+    sizehint!(rendered_images, length(images))
+
+    for i in eachindex(images)
+        img = images[i]
+
+        if isnothing(img)
+            if on_missing === :error
+                throw(
+                    ErrorException(
+                        "augment_phylopic: missing image for data point $i " *
+                            "(on_missing = :error)."
+                    )
+                )
+            elseif on_missing === :placeholder
+                push!(kept_indices, i)
+                push!(rendered_images, _placeholder_glyph())
+            end
+            continue
+        end
+
+        rendered = _apply_rotation(img, rotation)
+        if mirror
+            rendered = rendered[:, end:-1:1]
+        end
+
+        push!(kept_indices, i)
+        push!(rendered_images, rendered)
+    end
+
+    isempty(rendered_images) && return nothing
+    prepared_positions = _prepared_anchor_positions(anchor_positions, kept_indices)
+    return _augment_phylopic_anchored!(
+        parent,
+        prepared_positions,
+        rendered_images;
+        anchor_space = anchor_space,
+        glyph_size_space = glyph_size_space,
+        glyph_size = glyph_size,
+        aspect = aspect,
+        placement = placement,
+        xoffset = xoffset,
+        yoffset = yoffset,
+    )
+end
+
 function augment_phylopic!(
         ax::Makie.Axis,
         xs::AbstractVector{<:Real},
@@ -74,13 +152,6 @@ function augment_phylopic!(
         mirror::Bool,
         on_missing::Symbol,
     )::Nothing
-    on_missing ∈ VALID_ON_MISSING || throw(
-        ArgumentError(
-            "augment_phylopic: unknown `on_missing` value `$on_missing`. " *
-                "Valid values: $(join(VALID_ON_MISSING, ", "))."
-        )
-    )
-
     n = length(xs)
     n == length(ys) == length(images) || throw(
         ArgumentError(
@@ -88,48 +159,13 @@ function augment_phylopic!(
         )
     )
 
-    anchors = Makie.Point2f[]
-    rendered_images = AbstractMatrix[]
-    sizehint!(anchors, n)
-    sizehint!(rendered_images, n)
-
-    for i in 1:n
-        img = images[i]
-
-        if isnothing(img)
-            if on_missing === :error
-                throw(
-                    ErrorException(
-                        "augment_phylopic: missing image for data point $i " *
-                            "(on_missing = :error)."
-                    )
-                )
-            elseif on_missing === :placeholder
-                push!(anchors, Makie.Point2f(Float32(xs[i]), Float32(ys[i])))
-                push!(rendered_images, _placeholder_glyph())
-            end
-            # :skip falls through to the next iteration
-            continue
-        end
-
-        # Apply rotation (multiples of 90° only in v1)
-        rendered = _apply_rotation(img, rotation)
-
-        # Apply mirror (horizontal flip)
-        if mirror
-            rendered = rendered[:, end:-1:1]
-        end
-
-        push!(anchors, Makie.Point2f(Float32(xs[i]), Float32(ys[i])))
-        push!(rendered_images, rendered)
-    end
-
-    isempty(rendered_images) && return nothing
-
-    _augment_phylopic_anchored!(
+    anchors = Makie.Point2f[
+        Makie.Point2f(Float32(xs[i]), Float32(ys[i])) for i in eachindex(xs)
+    ]
+    _augment_resolved_phylopic_anchored!(
         ax,
         anchors,
-        rendered_images;
+        images;
         anchor_space = :data,
         glyph_size_space = :data,
         glyph_size = glyph_size,
@@ -137,6 +173,9 @@ function augment_phylopic!(
         placement = placement,
         xoffset = xoffset,
         yoffset = yoffset,
+        rotation = rotation,
+        mirror = mirror,
+        on_missing = on_missing,
     )
     return nothing
 end
