@@ -38,17 +38,6 @@ jobs:
       - uses: julia-actions/cache@v2
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
-      - name: Run examples smoke gallery
-        shell: julia --color=yes {0}
-        run: |
-          import Pkg
-          # The examples environment is version-controlled via examples/Project.toml only.
-          # A clean checkout resolves a fresh local Manifest.toml here.
-          Pkg.activate("examples")
-          Pkg.instantiate()
-          include("examples/smoke.jl")
-          paths = main()
-          @info "Rendered example artifacts" paths
   docs:
     name: Documentation
     runs-on: ubuntu-latest

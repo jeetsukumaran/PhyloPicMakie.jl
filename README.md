@@ -24,12 +24,16 @@ local manifest stays ignored and untracked.
 Run `julia --project=examples examples/src/explicit_overlays.jl`,
 `julia --project=examples examples/src/thumbnail_gallery.jl`, or
 `julia --project=examples examples/src/graph_anchors.jl` from the repository
-root to generate deterministic offline gallery artifacts in `examples/build/`.
+root to run the gallery directly. In an interactive session each script
+displays its figure. When run as a script, each example saves a PNG in the
+current working directory by default, and the first argument can override that
+output path.
+
 The `graph_anchors.jl` example is a `GraphMakie` node-position snapshot
 hand-off: it materializes `graphplot`, snapshots `p[:node_pos][]`, and routes
 those explicit coordinates into the public `augment_phylopic!` surface. It is
 not a live reactive overlay example.
 
-For CI-friendly verification, run `julia --project=examples examples/smoke.jl`.
-The required gallery intentionally omits a live UUID-fetch example so the
-smoke path stays deterministic and headless-friendly.
+The gallery intentionally omits a required live UUID-fetch example. Ad hoc
+live UUID experiments can still be done interactively against the public
+overlay and thumbnail-grid APIs when network access is desired.

@@ -17,10 +17,8 @@ same owner layer without reimplementing Makie projection logic.
 
 The repository ships a standalone `examples` environment that demonstrates the
 public overlay interface without any `PaleobiologyDB.jl` dependency. See the
-[Examples](examples.md) page for the deterministic gallery commands, smoke
-verification path, the `Project.toml`-only version-control policy for that
-environment, and the rationale for keeping the required examples
-offline-friendly.
+[Examples](examples.md) page for setup, manual run commands, output behavior,
+and the `graph_anchors.jl` node-position snapshot hand-off note.
 
 ## Packages
 
