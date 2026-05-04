@@ -188,7 +188,7 @@ function _pixel_marker_sizes(
     )
     return [
         _compute_pixel_marker_size(img_width, img_height, half_height_px; aspect)
-        for ((img_width, img_height), half_height_px) in zip(image_sizes, half_heights_px)
+            for ((img_width, img_height), half_height_px) in zip(image_sizes, half_heights_px)
     ]
 end
 
@@ -201,7 +201,7 @@ function _pixel_marker_offsets(
     dy_scale = Float32(pfy)
     return [
         Makie.Vec3f(dx_scale * ms[1], dy_scale * ms[2], 0.0f0)
-        for ms in marker_sizes
+            for ms in marker_sizes
     ]
 end
 
@@ -255,7 +255,7 @@ function _projected_anchor_positions!(
     pixel_half_heights = Makie.lift(upper_pixels, lower_pixels) do upper, lower
         Float32[
             hypot(up[1] - lo[1], up[2] - lo[2]) / 2.0f0
-            for (up, lo) in zip(upper, lower)
+                for (up, lo) in zip(upper, lower)
         ]
     end
 
