@@ -1,17 +1,16 @@
 # ---------------------------------------------------------------------------
 # PhyloPicMakie — core rendering loop
 #
-# Provides the generic augment_phylopic! and augment_phylopic_ranges! entry
-# points that render pre-resolved image matrices onto a Makie axis.
+# Provides the augment_phylopic! and augment_phylopic_ranges! methods that
+# render decoded image matrices onto a Makie axis.
 #
 # Name resolution (taxon → URL → image matrix) lives in
 # PaleobiologyDB.PhyloPicPBDB, which calls this function after
 # resolving images so that no PaleobiologyDB dependency is required here.
 #
-# The visible glyphs now render through the shared anchored-overlay substrate
-# in `_anchored_overlay.jl`.  Explicit data-coordinate wrappers still enter
-# here, but this layer now owns only image preparation, missing-image policy,
-# and routing to the common data-anchor owner.
+# This file prepares decoded images, applies the missing-image policy, and
+# calls `_augment_phylopic_anchored!` in `_anchored_overlay.jl` to place those
+# images on the Makie parent.
 #
 # Public:
 #   augment_phylopic!(ax, xs, ys, images; ...)  → Nothing
@@ -45,13 +44,11 @@ image matrices.
 `images` is a `Vector{Union{Matrix{RGBA{N0f8}}, Nothing}}` — `nothing`
 entries are handled according to `on_missing`.
 
-This is the generic rendering entry point.  Callers are responsible for
-supplying pre-resolved images.  For PBDB taxon-name resolution, use
+This method expects decoded images. For PBDB taxon-name resolution, use
 `PaleobiologyDB.PhyloPicPBDB.augment_phylopic!` instead.
 
-For `aspect = :preserve`, rendered glyphs maintain their correct pixel-space
-aspect ratio on anisotropic axes and stay reactive under relimit and resize
-through the shared anchored-overlay substrate.
+For `aspect = :preserve`, rendered glyphs keep their original pixel aspect
+ratio on anisotropic axes and update when axis limits or figure size change.
 """
 
 function _placeholder_glyph()::Matrix{RGBA{N0f8}}

@@ -5,12 +5,11 @@
 [![Build Status](https://github.com/jeetsukumaran/PhyloPicMakie.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/jeetsukumaran/PhyloPicMakie.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Aqua](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 
-`PhyloPicMakie` provides Makie-native rendering utilities for pre-resolved
-PhyloPic silhouette images. Public explicit-coordinate overlay calls now route
-through a shared internal anchored-overlay substrate, so both data-space and
-projected pixel-space anchor workflows keep aspect, placement, and resize
-behavior inside `PhyloPicMakie` instead of reimplementing Makie-space
-projection mechanics in client packages.
+PhyloPicMakie places PhyloPic silhouettes in Makie figures. Start with the
+[stable documentation](https://jeetsukumaran.github.io/PhyloPicMakie.jl/stable/)
+or [development documentation](https://jeetsukumaran.github.io/PhyloPicMakie.jl/dev/)
+for the reader map, then use the [example gallery](#example-gallery) to run
+silhouette-annotated figures locally.
 
 ## Example gallery
 
@@ -29,11 +28,10 @@ displays its figure. When run as a script, each example saves a PNG in the
 current working directory by default, and the first argument can override that
 output path.
 
-The `graph_anchors.jl` example is a `GraphMakie` node-position snapshot
-hand-off: it materializes `graphplot`, snapshots `p[:node_pos][]`, and routes
-those explicit coordinates into the public `augment_phylopic!` surface. It is
-not a live reactive overlay example.
+The `graph_anchors.jl` example builds a `GraphMakie` plot, reads the node
+positions from `p[:node_pos][]`, and passes those coordinates to
+`augment_phylopic!`. It does not keep silhouettes attached while the graph
+layout changes.
 
-The gallery intentionally omits a required live UUID-fetch example. Ad hoc
-live UUID experiments can still be done interactively against the public
-overlay and thumbnail-grid APIs when network access is desired.
+The gallery scripts are local rendering examples. The documentation shows
+`node_uuid` calls for network-enabled PhyloPic use.

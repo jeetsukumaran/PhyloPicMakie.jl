@@ -468,8 +468,8 @@ end
 """
     PHYLOPIC_IMAGE_RENDERINGS
 
-Valid `image_rendering` symbols understood by the PhyloPicMakie and
-TaxonTreeMakie visualization layers.  Each symbol selects a different URL
+Valid `image_rendering` symbols understood by PhyloPicMakie and
+TaxonTreeMakie plotting functions. Each symbol selects a different URL
 field from a [`PhyloPicImage`](@ref) (or the corresponding field in the
 NamedTuple returned by `acquire_phylopic`).
 
@@ -488,7 +488,7 @@ const PHYLOPIC_IMAGE_RENDERINGS = (:thumbnail, :raster, :og_image, :vector, :sou
 """
     PHYLOPIC_IMAGE_ALL_LABEL_FIELDS
 
-All image label field symbols recognised by the PhyloPicMakie display layer.
+All image label field symbols recognised by PhyloPicMakie display functions.
 
 Includes virtual fields computed from the call context:
 - `:taxon_name` — the taxon name string supplied by the caller.

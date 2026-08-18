@@ -1,10 +1,9 @@
 # ---------------------------------------------------------------------------
-# PhyloPicMakie - generic anchored-overlay foundation
+# PhyloPicMakie - image placement helpers
 #
-# Provides the internal substrate shared by explicit data-coordinate overlays
-# and projected/screen-anchor overlays.  The visible glyphs are rendered as
-# pixel-space scatter markers, while data-anchor variants retain reactive data
-# limits and projected positions through transparent source plots.
+# Places decoded images either at axis data positions or at projected pixel
+# positions. Visible glyphs are rendered as pixel-space scatter markers, and
+# transparent Makie plots keep axis limits and projected positions updated.
 # ---------------------------------------------------------------------------
 
 """
@@ -320,9 +319,8 @@ end
         yoffset::Real,
     ) -> Union{Nothing, _AnchoredOverlay}
 
-Render pre-resolved image matrices through the internal anchored-overlay
-substrate shared by the public `augment_phylopic!` wrappers and future
-projected-anchor clients.
+Place decoded image matrices on a Makie parent at either data positions or
+pixel positions.
 
 Supported combinations are:
 
@@ -330,7 +328,7 @@ Supported combinations are:
 - `anchor_space = :pixel`, `glyph_size_space = :pixel`
 
 Mixed data/pixel combinations currently throw `ArgumentError` so callers do not
-silently mix incompatible contracts.
+silently combine incompatible settings.
 """
 function _augment_phylopic_anchored!(
         parent,

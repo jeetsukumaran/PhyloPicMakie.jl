@@ -6,7 +6,7 @@ A Julia client for the [PhyloPic](https://www.phylopic.org/) API (v2).
 PhyloPic is an open database of freely reusable silhouette images of
 organisms, searchable by phylogeny.  This package provides typed structs
 ([`PhyloPicNode`](@ref), [`PhyloPicImage`](@ref)), low-level API wrappers,
-a high-level image-selection layer, and batch-fetch utilities with built-in
+a high-level image-selection API, and batch-fetch utilities with built-in
 deduplication and DataCaches-based caching.
 
 ## Quick start

@@ -149,8 +149,7 @@ PhyloPic node UUIDs (strings).  For PBDB taxon-name resolution use
 
 ## Returns
 
-`Nothing`.  The glyphs are added as side-effects to `ax` through the shared
-internal anchored-overlay substrate.
+`Nothing`. The silhouettes are drawn on `ax`.
 
 ## Examples
 
@@ -164,7 +163,7 @@ augment_phylopic!(
     ax,
     [1.0, 2.0],
     [1.0, 2.0];
-    node_uuid       = ["3c4b8687-2401-4e5b-afb5-19aa3e7e8b26", nothing],
+    node_uuid       = ["8f901db5-84c1-4dc0-93ba-2300eeddf4ab", nothing],
     glyph_size      = 0.4,
     placement       = :center,
     image_rendering = :thumbnail,
@@ -222,9 +221,9 @@ end
 
 Non-mutating alias for [`augment_phylopic!`](@ref).
 
-Semantically identical: adds a glyph layer to an existing axis.  The `!`
-convention is preserved in [`augment_phylopic!`](@ref); this alias is
-provided for naming symmetry.
+Semantically identical: draws silhouettes on an existing axis. The `!`
+convention is preserved in [`augment_phylopic!`](@ref); this alias is provided
+for naming symmetry.
 
 See [`augment_phylopic!`](@ref) for the full keyword-argument documentation.
 """
@@ -282,8 +281,8 @@ the range endpoints and then calls [`augment_phylopic!`](@ref).
 ```julia
 using PhyloPicMakie, CairoMakie
 
-node_uuids = ["3c4b8687-2401-4e5b-afb5-19aa3e7e8b26",
-              "7fb20e1a-3a19-4e8c-beb9-3e7ffb59c0cf"]
+node_uuids = ["8f901db5-84c1-4dc0-93ba-2300eeddf4ab",
+              "36c04f2f-b7d2-4891-a4a9-138d79592bf2"]
 first_app  = [68.0, 68.0]
 last_app   = [66.0, 66.0]
 
@@ -386,8 +385,8 @@ using PhyloPicMakie, CairoMakie, DataFrames
 df = DataFrame(
     x    = [1.0, 2.0],
     y    = [1.0, 2.0],
-    uuid = ["3c4b8687-2401-4e5b-afb5-19aa3e7e8b26",
-            "7fb20e1a-3a19-4e8c-beb9-3e7ffb59c0cf"],
+    uuid = ["8f901db5-84c1-4dc0-93ba-2300eeddf4ab",
+            "36c04f2f-b7d2-4891-a4a9-138d79592bf2"],
 )
 
 fig = Figure()
@@ -470,8 +469,8 @@ df = DataFrame(
     first_app = [68.0, 68.0],
     last_app  = [66.0, 66.0],
     row       = [1.0, 2.0],
-    uuid      = ["3c4b8687-2401-4e5b-afb5-19aa3e7e8b26",
-                 "7fb20e1a-3a19-4e8c-beb9-3e7ffb59c0cf"],
+    uuid      = ["8f901db5-84c1-4dc0-93ba-2300eeddf4ab",
+                 "36c04f2f-b7d2-4891-a4a9-138d79592bf2"],
 )
 
 fig = Figure()

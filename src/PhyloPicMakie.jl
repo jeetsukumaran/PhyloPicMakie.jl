@@ -1,14 +1,13 @@
 """
     PhyloPicMakie
 
-Standalone Makie + FileIO package providing image-loading, rendering, and
-PhyloPic-native visualization utilities for
+Makie + FileIO package for loading, rendering, and plotting
 [PhyloPic](https://www.phylopic.org/) silhouette images.
 
 `PhyloPicMakie.PhyloPicDB` exposes the underlying
 [PhyloPicDB](https://github.com/jeetsukumaran/PhyloPicDB.jl) data/API module,
-giving the caller a single `using PhyloPicMakie` entry point that covers both
-the visualization layer and the underlying PhyloPic API client.
+so `using PhyloPicMakie` gives callers both plotting functions and the
+PhyloPic API client.
 
 ## Namespace hierarchy
 
@@ -56,8 +55,8 @@ integrate with PhyloPicMakie (e.g. `PaleobiologyDB.PhyloPicPBDB`,
 | `_load_phylopic_image(url)` | Download + decode + cache a PNG image |
 | `_resolve_images_by_uuid(uuids, glyph, n; ...)` | UUID vector → image matrix vector |
 | `_compute_image_bbox(x, y, w, h; ...)` | Data-space bounding box with scale correction |
-| `_augment_phylopic_anchored!(ax, anchors, images; ...)` | Shared anchored-overlay substrate for data/pixel anchors |
-| `_augment_resolved_phylopic_anchored!(parent, anchors, images; ...)` | Shared render-preparation path for pre-resolved images |
+| `_augment_phylopic_anchored!(ax, anchors, images; ...)` | Place decoded images at resolved positions on an axis |
+| `_augment_resolved_phylopic_anchored!(parent, anchors, images; ...)` | Prepare decoded images and place them on a Makie parent |
 | `_axis_scale_correction_obs(scene)` | Reactive `(ypx/unit) / (xpx/unit)` correction |
 | `_apply_rotation(img, deg)` | Rotate image matrix by multiples of 90° |
 | `_range_anchor(xstart, xstop, at)` | Resolve range endpoint to an x coordinate |

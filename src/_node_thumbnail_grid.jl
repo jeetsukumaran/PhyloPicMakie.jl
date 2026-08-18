@@ -218,8 +218,8 @@ fig = Figure()
 ax  = Axis(fig[1, 1])
 phylopic_thumbnail_grid!(
     ax,
-    ["3c4b8687-2401-4e5b-afb5-19aa3e7e8b26",
-     "7fb20e1a-3a19-4e8c-beb9-3e7ffb59c0cf"];
+    ["8f901db5-84c1-4dc0-93ba-2300eeddf4ab",
+     "36c04f2f-b7d2-4891-a4a9-138d79592bf2"];
     image_filter = :primary,
     ncols = 2,
 )
@@ -397,8 +397,8 @@ Returns the created `Makie.Figure`.
 using PhyloPicMakie, CairoMakie
 
 fig = phylopic_thumbnail_grid(
-    ["3c4b8687-2401-4e5b-afb5-19aa3e7e8b26",
-     "7fb20e1a-3a19-4e8c-beb9-3e7ffb59c0cf"];
+    ["8f901db5-84c1-4dc0-93ba-2300eeddf4ab",
+     "36c04f2f-b7d2-4891-a4a9-138d79592bf2"];
     image_filter = :primary,
     ncols        = 2,
 )

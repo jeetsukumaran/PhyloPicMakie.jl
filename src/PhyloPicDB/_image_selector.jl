@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------
-# PhyloPicDB — image selector layer
+# PhyloPicDB — image selection helpers
 #
 # High-level functions that combine a node UUID with an image-retrieval
 # strategy, and a pure dispatch function for choosing one image from a list.
