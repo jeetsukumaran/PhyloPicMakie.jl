@@ -32,7 +32,9 @@ script, each example saves a PNG in the current working directory by default.
 Pass a custom path as the first argument if you want the output somewhere else.
 
 - `explicit_overlays.jl`: point-coordinate and range-coordinate silhouettes.
-- `thumbnail_gallery.jl`: thumbnail-grid rendering with grouped labels.
+- `thumbnail_gallery.jl`: a deterministic local rendering example; use
+  [build a thumbnail gallery](how-to/thumbnail-gallery.md) for the
+  PhyloPic UUID workflow.
 - `graph_anchors.jl`: a `GraphMakie` plot whose node positions are read from
   `p[:node_pos][]` and passed to `augment_phylopic!`.
 

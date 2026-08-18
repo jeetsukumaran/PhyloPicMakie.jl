@@ -13,6 +13,7 @@ The current [examples](../examples.md) provide runnable scripts, while the
 - [Place silhouettes on points](points.md)
 - [Place silhouettes on ranges](ranges.md)
 - [Use table columns](table-columns.md)
+- [Build a thumbnail gallery](thumbnail-gallery.md)
 - [Adjust silhouette placement](adjust-placement.md)
 - [Choose PhyloPic images](choose-phylopic-images.md)
 - [Handle missing images](handle-missing-images.md)
