@@ -62,5 +62,7 @@ Use direct `augment_phylopic!` calls for one-off figures. Use the batch
 functions when another step needs the image records, when you will reuse a UUID
 set, or when a gallery workflow needs image pools before rendering.
 
-See the [rendering reference](../api/rendering.md) for plotting keywords and
-the [PhyloPicDB reference](../api/phylopic_db.md) for API-client details.
+See [choose PhyloPic images](choose-phylopic-images.md) to select image
+records or rendering quality, the [rendering reference](../api/rendering.md)
+for plotting keywords, and the [PhyloPicDB reference](../api/phylopic_db.md)
+for API-client details.

@@ -1,12 +1,15 @@
 ---
 date-created: 2026-08-16T23:18:46-07:00
 workflow-instrument: Tasking plan
-workflow-status: Proposed
+workflow-status: Completed
 workflow-agent-thread-id: codex/019ff9d2-ef36-7e31-92dd-bea4892ee11e
+workflow-agent-implementing-id:
+  - codex/019ff9d2-ef36-7e31-92dd-bea4892ee11e
 workflow-location: /home/jeetsukumaran/site/storage/local/computing/research/20260414_PhyloPicMakie.jl/PhyloPicMakie.jl
 workflow-production-id: diataxis-docs-primer
 workflow-prd: .workflow-docs/202608140015_diataxis-docs-rewrite/01_prd.md
 workflow-tranche: .workflow-docs/202608140015_diataxis-docs-rewrite/02_tranches.md
+date-completed: 2026-08-17T18:33:14-07:00
 ---
 
 # Tasks for tranche R1: Remediate the completed offline-first path
@@ -552,3 +555,116 @@ The implementing agent's final report must include:
   `PhyloPicDB.batch_images`, upstream DataCaches APIs, or a separately approved
   source change.
 - Whether Tranche 4 tasking must be regenerated after R1.
+
+## Completion report
+
+### Status
+
+R1 is complete. The user explicitly instructed completion and closeout in this
+thread after the R1 tasking had remained in `workflow-status: Proposed`. This
+report records that instruction as the authorization for closing the remedial
+workflow state.
+
+The completed live documentation now starts from PhyloPic node UUIDs,
+taxon-derived identifiers from other packages, PhyloPic image records, or
+package-supported lookup. It does not teach `offline_silhouette()`,
+`docs/src/_offline_silhouette.jl`, preloaded image matrices, or local image
+fixtures as the normal first path.
+
+### Files changed by the completed R1 work
+
+- `README.md`.
+- `docs/make.jl`.
+- `docs/src/index.md`.
+- `docs/src/primer.md`.
+- `docs/src/tutorial.md`.
+- `docs/src/how-to/index.md`.
+- `docs/src/how-to/points.md`.
+- `docs/src/how-to/ranges.md`.
+- `docs/src/how-to/table-columns.md`.
+- `docs/src/how-to/repeated-queries.md`.
+- `docs/src/explanation/index.md`.
+- `docs/src/api/rendering.md`.
+- `src/` docstrings and comments only, to prevent `@autodocs` from exporting
+  rejected implementation-first prose.
+- Workflow correction notes in `.workflow-docs/202608140015_diataxis-docs-rewrite/`.
+
+The R1 tasking expected `docs/src/how-to/reuse-phylopic-queries.md`; the
+implemented page is `docs/src/how-to/repeated-queries.md`. That filename is the
+current docs navigation entry in `docs/make.jl`.
+
+### Lock results
+
+- Lock 1, restore the user-first trajectory: closed. `README.md`,
+  `docs/src/index.md`, `docs/src/primer.md`, `docs/src/tutorial.md`, and the
+  first-wave how-to pages start from PhyloPic node UUIDs, taxon-derived
+  identifiers, PhyloPic image records, coordinates, ranges, or tables.
+- Lock 2, keep caching in the right place: closed. `docs/src/primer.md` links
+  to later caching guidance instead of teaching cache setup. The page
+  `docs/src/how-to/repeated-queries.md` states the exact local APIs and helper
+  functions that call `DataCaches.autocache`.
+- Lock 3, repair completed first-wave docs: closed. `docs/src/primer.md`,
+  `docs/src/tutorial.md`, `docs/src/how-to/points.md`,
+  `docs/src/how-to/ranges.md`, and `docs/src/how-to/table-columns.md` no longer
+  begin from a local image fixture.
+- Lock 4, keep generated PNGs as build products: closed. The generated images
+  checked below live under `docs/build/`, and no PNG under `docs/src`,
+  `examples`, `docs`, or `README.md` is tracked.
+- Lock 5, preserve the documentation-only boundary: closed for behavior. The
+  R1 source changes are docstrings and comments; no public function signature,
+  exported name, plotting behavior, network behavior, or DataCaches behavior was
+  changed for this closeout.
+- Lock 6, keep tasking history honest: closed. Tasking files 03-02, 03-03, and
+  03-04 are marked `Superseded`; tasking file 03-01 contains a supersession
+  note; this R1 report records the correction rather than deleting history.
+
+### Verification commands and results
+
+- `rg -n "offline_silhouette|_offline_silhouette|preloaded image matrix|preloaded-image|generated in-memory image|offline-capable|required learning path remains offline|required tutorial remains offline|live UUID examples are optional|load an image matrix|secret offline image|local image fixture|local fixture" README.md docs/src src docs/build`.
+  Result: exit code 1, no matches.
+- `rg -n "generic anchored-overlay substrate|shared internal anchored-overlay substrate|projected pixel-anchor placement mechanics|owner layer|data-anchor|pixel-anchor|anchored-overlay substrate|placement mechanics|\\bowner\\b|\\blayer\\b" README.md docs/src src docs/build`.
+  Result: exit code 1, no matches.
+- `rg -n "DataCaches|cached|cache|deduplicat|autocache|batch_primary_images|batch_images|_load_phylopic_image" README.md docs/src src`.
+  Result: matches are tied to `docs/src/how-to/repeated-queries.md`,
+  `docs/src/index.md`, `docs/src/primer.md`, `docs/src/api/rendering.md`,
+  `src/_image_cache.jl`, `src/_glyph_resolution.jl`,
+  `src/PhyloPicDB/_bulk.jl`, and PhyloPicDB docstrings.
+- `julia --project=docs docs/make.jl`.
+  Result: passed. Documenter emitted only the expected deployment warning:
+  it could not auto-detect a deployment environment and skipped deployment.
+- `file docs/build/primer/primer-silhouettes.png docs/build/tutorial/tutorial-first-figure.png docs/build/how-to/points/points-silhouettes.png docs/build/how-to/ranges/ranges-silhouettes.png docs/build/how-to/table-columns/table-columns-silhouettes.png`.
+  Result: all 5 files are PNG images.
+- `git ls-files docs/src examples docs README.md | rg '\\.png$'`.
+  Result: exit code 1, no tracked PNG source assets.
+- `git status --short`.
+  Result before this closeout edit: no output.
+
+### Generated image paths
+
+- `docs/build/primer/primer-silhouettes.png`, build product.
+- `docs/build/tutorial/tutorial-first-figure.png`, build product.
+- `docs/build/how-to/points/points-silhouettes.png`, build product.
+- `docs/build/how-to/ranges/ranges-silhouettes.png`, build product.
+- `docs/build/how-to/table-columns/table-columns-silhouettes.png`, build
+  product.
+
+### DataCaches claims
+
+- `docs/src/how-to/repeated-queries.md` says direct plotting calls deduplicate
+  repeated UUIDs within one call through `src/_glyph_resolution.jl`.
+- `docs/src/how-to/repeated-queries.md` says selected image URL decoding calls
+  `_load_phylopic_image(url)`, and `src/_image_cache.jl` shows that function
+  calls `DataCaches.autocache`.
+- `docs/src/how-to/repeated-queries.md`, `docs/src/index.md`, and
+  `docs/src/api/rendering.md` say `PhyloPicDB.batch_primary_images` and
+  `PhyloPicDB.batch_images` are DataCaches-backed batch APIs, and
+  `src/PhyloPicDB/_bulk.jl` shows both functions call
+  `DataCaches.autocache`.
+- No live docs claim that all direct UUID rendering is the same API as the
+  batch image-record helpers.
+
+### Remaining work after R1
+
+Tranche 4 tasking must be regenerated from the R1-clean state. The superseded
+file `.workflow-docs/202608140015_diataxis-docs-rewrite/03-04_tranche-04--tasking-1.md`
+must not be executed.

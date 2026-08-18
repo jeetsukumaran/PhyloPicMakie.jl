@@ -61,5 +61,8 @@ augment_phylopic!(axis, x, y; glyph = my_image_matrix)
 ```
 
 See the [rendering reference](../api/rendering.md) for the complete option
-set, or the [fuller point-and-range example](../examples.md) for a larger
-panel.
+set, [adjust silhouette placement](adjust-placement.md) to tune the visual
+result, [choose PhyloPic images](choose-phylopic-images.md) to select another
+image representation, or [handle missing images](handle-missing-images.md) to
+choose another missing-image policy. The [fuller point-and-range example](../examples.md)
+shows a larger panel.

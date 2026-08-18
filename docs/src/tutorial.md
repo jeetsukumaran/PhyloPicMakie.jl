@@ -84,6 +84,11 @@ completed figure at the start of this lesson. A gray placeholder means that no
 image was available for that entry during the run.
 
 For focused tasks, continue with the [how-to guides](how-to/index.md). See the
-[how-to guide for repeated queries](how-to/repeated-queries.md) when you will
-reuse the same UUIDs across analyses, or the [rendering reference](api/rendering.md)
-when you need the complete list of options.
+[placement guide](how-to/adjust-placement.md) when the first figure needs
+visual tuning, [choose PhyloPic images](how-to/choose-phylopic-images.md) when
+you need image records or another rendering quality, and
+[handle missing images](how-to/handle-missing-images.md) for another missing-image
+policy. See the [how-to guide for repeated queries](how-to/repeated-queries.md)
+when you will reuse the same UUIDs across analyses, or the
+[rendering reference](api/rendering.md) when you need the complete list of
+options.

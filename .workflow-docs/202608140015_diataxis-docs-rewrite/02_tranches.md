@@ -385,6 +385,12 @@ The pages should use concrete headings such as "Place silhouettes on points", "P
 **Type**: AFK
 **Blocked by**: Tranches 1, 2, and 3 as completed worktree state
 
+### Completion status
+
+R1 is complete as of 2026-08-17T18:33:14-07:00. The closeout report is in
+`.workflow-docs/202608140015_diataxis-docs-rewrite/03-05_tranche-r1--tasking-1.md`.
+The old Tranche 4 tasking remains superseded and must not be executed.
+
 ### Governance and required reading
 
 - Read the project-wide required reading listed above line by line.
@@ -440,11 +446,11 @@ Update completed tasking files only as archival workflow documents: add correcti
 
 ### Acceptance criteria
 
-- [ ] Given a reader opens README, home, primer, or tutorial, when they follow the first path, then they start from PhyloPic identifiers, taxon-derived identifiers, or package-supported PhyloPic lookup.
-- [ ] Given completed first-wave docs are audited, then `offline_silhouette()`, `docs/src/_offline_silhouette.jl`, "preloaded image matrix", and equivalent local-image fixture language do not appear as the main reader path.
-- [ ] Given later cache documentation is audited, then explicit DataCaches claims name `PhyloPicDB.batch_primary_images`, `PhyloPicDB.batch_images`, or the upstream DataCaches API being used.
-- [ ] Given direct UUID rendering is described, then docs distinguish its current per-call deduplication from DataCaches-backed batch APIs unless a separately approved source change has expanded caching.
-- [ ] Given the remedial diff is audited, then public API behavior, PhyloPic API client behavior, and generated PNG asset policy have not changed without explicit approval.
+- [x] Given a reader opens README, home, primer, or tutorial, when they follow the first path, then they start from PhyloPic identifiers, taxon-derived identifiers, or package-supported PhyloPic lookup.
+- [x] Given completed first-wave docs are audited, then `offline_silhouette()`, `docs/src/_offline_silhouette.jl`, "preloaded image matrix", and equivalent local-image fixture language do not appear as the main reader path.
+- [x] Given later cache documentation is audited, then explicit DataCaches claims name `PhyloPicDB.batch_primary_images`, `PhyloPicDB.batch_images`, or the upstream DataCaches API being used.
+- [x] Given direct UUID rendering is described, then docs distinguish its current per-call deduplication from DataCaches-backed batch APIs unless a separately approved source change has expanded caching.
+- [x] Given the remedial diff is audited, then public API behavior, PhyloPic API client behavior, and generated PNG asset policy have not changed without explicit approval.
 
 ### User stories addressed
 

@@ -7,6 +7,9 @@ CurrentModule = PhyloPicMakie
 Use this page when you need signatures, keyword meanings, return values, and
 error behavior for silhouette plotting.
 
+For task-oriented examples, see [adjust silhouette placement](../how-to/adjust-placement.md)
+and [handle missing images](../how-to/handle-missing-images.md).
+
 For the common path, pass one PhyloPic node UUID per point, range, or table
 row with `node_uuid`. If another package resolves taxon names or PBDB records
 to PhyloPic node UUIDs, pass those UUIDs here. For PBDB-integrated

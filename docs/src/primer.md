@@ -65,6 +65,10 @@ augment_phylopic!(axis, coordinates_x, coordinates_y; glyph = my_image_matrix)
 ```
 
 Continue with the [tutorial](tutorial.md) to build and save a first figure in
-small steps. The [how-to guide for repeated queries](how-to/repeated-queries.md)
+small steps. Use [adjust silhouette placement](how-to/adjust-placement.md)
+when the first figure needs visual tuning, [choose PhyloPic images](how-to/choose-phylopic-images.md)
+when you need image records or another rendering quality, and
+[handle missing images](how-to/handle-missing-images.md) when placeholders do
+not fit the workflow. The [how-to guide for repeated queries](how-to/repeated-queries.md)
 shows where DataCaches-backed batch calls fit, and the
 [rendering reference](api/rendering.md) records all plotting options.

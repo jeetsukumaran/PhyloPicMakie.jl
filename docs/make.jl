@@ -23,6 +23,9 @@ makedocs(;
             "Place silhouettes on points" => "how-to/points.md",
             "Place silhouettes on ranges" => "how-to/ranges.md",
             "Use table columns" => "how-to/table-columns.md",
+            "Adjust silhouette placement" => "how-to/adjust-placement.md",
+            "Choose PhyloPic images" => "how-to/choose-phylopic-images.md",
+            "Handle missing images" => "how-to/handle-missing-images.md",
             "Cache repeated PhyloPic queries" => "how-to/repeated-queries.md",
         ],
         "Explanation" => [

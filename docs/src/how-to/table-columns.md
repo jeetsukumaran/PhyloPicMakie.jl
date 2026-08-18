@@ -68,7 +68,10 @@ image was unavailable during the run.
 
 The table method accepts `x`, `y`, and optional `node_uuid` column selectors.
 It has no label selector, so this recipe adds labels with `CairoMakie.text!`.
-See the [rendering reference](../api/rendering.md) for complete behavior.
+See [choose PhyloPic images](choose-phylopic-images.md) when the table values
+need another image representation, [handle missing images](handle-missing-images.md)
+when the placeholder policy does not fit, or the
+[rendering reference](../api/rendering.md) for complete behavior.
 
 ## Use a prepared image matrix
 

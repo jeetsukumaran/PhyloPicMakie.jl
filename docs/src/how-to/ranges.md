@@ -82,4 +82,6 @@ otherwise identical intervals. `at` selects where along each interval the
 silhouette is placed.
 
 See the [rendering reference](../api/rendering.md) for the complete option
-set.
+set, [adjust silhouette placement](adjust-placement.md) to tune the visual
+result, or [handle missing images](handle-missing-images.md) to choose another
+missing-image policy.
