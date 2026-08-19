@@ -4,9 +4,8 @@
 # Provides the augment_phylopic! and augment_phylopic_ranges! methods that
 # render decoded image matrices onto a Makie axis.
 #
-# Name resolution (taxon → URL → image matrix) lives in
-# PaleobiologyDB.PhyloPicPBDB, which calls this function after
-# resolving images so that no PaleobiologyDB dependency is required here.
+# PBDB taxon-name resolution begins in PaleobiologyDB.PBDBMakie. This file
+# receives decoded images so that no PaleobiologyDB dependency is required here.
 #
 # This file prepares decoded images, applies the missing-image policy, and
 # calls `_augment_phylopic_anchored!` in `_anchored_overlay.jl` to place those
@@ -45,7 +44,7 @@ image matrices.
 entries are handled according to `on_missing`.
 
 This method expects decoded images. For PBDB taxon-name resolution, use
-`PaleobiologyDB.PhyloPicPBDB.augment_phylopic!` instead.
+`PaleobiologyDB.PBDBMakie`.
 
 For `aspect = :preserve`, rendered glyphs keep their original pixel aspect
 ratio on anisotropic axes and update when axis limits or figure size change.

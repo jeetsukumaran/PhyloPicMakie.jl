@@ -7,7 +7,7 @@
 # dependency on PaleobiologyDB or PBDB taxon names.
 #
 # Also contains _extract_column, a generic table-column extractor shared
-# with PaleobiologyDB.PhyloPicPBDB (which references it as
+# with PaleobiologyDB.PBDBMakie (which references it as
 # PhyloPicMakie._extract_column).
 #
 # Call graph:
@@ -95,8 +95,8 @@ Add one PhyloPic silhouette glyph per datum to an existing Makie axis `ax`,
 anchored at positions `(x[i], y[i])` in axis data coordinates.
 
 This is the **PhyloPic-native** public API: image sources are specified as
-PhyloPic node UUIDs (strings).  For PBDB taxon-name resolution use
-`PaleobiologyDB.PhyloPicPBDB.augment_phylopic!` instead.
+PhyloPic node UUIDs (strings). For PBDB taxon-name resolution, use
+`PaleobiologyDB.PBDBMakie`.
 
 ## Arguments
 

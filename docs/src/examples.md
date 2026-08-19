@@ -36,7 +36,9 @@ Pass a custom path as the first argument if you want the output somewhere else.
   [build a thumbnail gallery](how-to/thumbnail-gallery.md) for the
   PhyloPic UUID workflow.
 - `graph_anchors.jl`: a `GraphMakie` plot whose node positions are read from
-  `p[:node_pos][]` and passed to `augment_phylopic!`.
+  `graph_plot[:node_pos][]` and passed to `augment_phylopic!`; see [place
+  silhouettes on GraphMakie node-position snapshots](how-to/graphmakie-node-positions.md)
+  for the PhyloPic UUID workflow.
 
 ## Network-enabled examples
 

@@ -14,3 +14,5 @@ coordinates, ranges, galleries, image matrices, and saved figures. Use the
 reference material. Use [choose PhyloPic images](../how-to/choose-phylopic-images.md)
 for image-record selection and [cache repeated PhyloPic queries](../how-to/repeated-queries.md)
 for the repeated-query workflow.
+
+- [About PaleobiologyDB workflows](paleobiologydb-workflows.md)

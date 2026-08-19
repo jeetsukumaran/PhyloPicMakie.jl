@@ -37,13 +37,18 @@ cells in that group wrap at `ncols`. Use `:rows` when every non-empty group
 should occupy one unwrapped row, or `:flat` when group boundaries should be
 ignored.
 
+`node_labels` must align one-for-one with `node_uuids`; supplying it provides
+the displayed taxon-name context and avoids the default preferred-name lookup
+request for each UUID.
+
 Start with PhyloPic node UUIDs. `phylopic_thumbnail_grid` selects image records
 internally; it does not take taxon names or `PhyloPicImage` records as direct
 gallery input. If another package starts from taxon names, use
-[`PaleobiologyDB.PhyloPicPBDB.phylopic_thumbnail_grid!`](https://jeetsukumaran.github.io/PaleobiologyDB.jl/dev/api/phylopic_makie/)
-to resolve that package's taxon-name workflow. If you already have decoded
-image matrices, the prebuilt-cell overload in the [rendering reference](../api/rendering.md)
-is an advanced alternative.
+[`PaleobiologyDB.PBDBMakie`](https://jeetsukumaran.github.io/PaleobiologyDB.jl/dev/api/phylopic_makie/)
+for that package's taxon-name workflow. Read [about PaleobiologyDB
+workflows](../explanation/paleobiologydb-workflows.md) for the distinction.
+If you already have decoded image matrices, the prebuilt-cell overload in the
+[rendering reference](../api/rendering.md) is an advanced alternative.
 
 Choose a primary image, another image filter, or an image quality with
 [choose PhyloPic images](choose-phylopic-images.md). The direct gallery call

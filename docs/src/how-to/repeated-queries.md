@@ -58,9 +58,13 @@ image_pools = PPDB.batch_images(uuids; max_pages = 2)
 functions call `DataCaches.autocache` in `src/PhyloPicDB/_bulk.jl`, and both
 deduplicate repeated UUIDs before querying.
 
-Use direct `augment_phylopic!` calls for one-off figures. Use the batch
-functions when another step needs the image records, when you will reuse a UUID
-set, or when a gallery workflow needs image pools before rendering.
+For immediate rendering, pass UUIDs directly to `augment_phylopic!` or
+`phylopic_thumbnail_grid`: direct UUID resolution deduplicates UUIDs within the
+call, and the decoded-image loader caches each selected URL separately. Use
+`PhyloPicDB.batch_primary_images` or `PhyloPicDB.batch_images` when your own code
+needs image records or cross-call metadata-query caching. The dictionaries
+returned by those batch functions are not an input form for
+`phylopic_thumbnail_grid`.
 
 See [choose PhyloPic images](choose-phylopic-images.md) to select image
 records or rendering quality, the [rendering reference](../api/rendering.md)

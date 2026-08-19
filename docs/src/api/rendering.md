@@ -7,14 +7,16 @@ CurrentModule = PhyloPicMakie
 Use this page when you need signatures, keyword meanings, return values, and
 error behavior for silhouette plotting.
 
-For task-oriented examples, see [adjust silhouette placement](../how-to/adjust-placement.md),
-[build a thumbnail gallery](../how-to/thumbnail-gallery.md), and
-[handle missing images](../how-to/handle-missing-images.md).
+For task help, see [GraphMakie snapshots](../how-to/graphmakie-node-positions.md),
+[placement](../how-to/adjust-placement.md), [thumbnail
+galleries](../how-to/thumbnail-gallery.md), [missing
+images](../how-to/handle-missing-images.md), and [PBDB
+workflows](../explanation/paleobiologydb-workflows.md).
 
 For the common path, pass one PhyloPic node UUID per point, range, or table
 row with `node_uuid`. If another package resolves taxon names or PBDB records
 to PhyloPic node UUIDs, pass those UUIDs here. For PBDB-integrated
-taxon-name resolution, see [`PaleobiologyDB.PhyloPicPBDB`](https://jeetsukumaran.github.io/PaleobiologyDB.jl/dev/api/phylopic_makie/).
+taxon-name resolution, see [`PaleobiologyDB.PBDBMakie`](https://jeetsukumaran.github.io/PaleobiologyDB.jl/dev/api/phylopic_makie/).
 
 If you already have decoded image matrices, use `glyph` or the
 vector-with-images method. Direct `node_uuid` plotting resolves repeated UUIDs

@@ -24,6 +24,7 @@ makedocs(;
             "Place silhouettes on ranges" => "how-to/ranges.md",
             "Use table columns" => "how-to/table-columns.md",
             "Build a thumbnail gallery" => "how-to/thumbnail-gallery.md",
+            "Place silhouettes on GraphMakie node-position snapshots" => "how-to/graphmakie-node-positions.md",
             "Adjust silhouette placement" => "how-to/adjust-placement.md",
             "Choose PhyloPic images" => "how-to/choose-phylopic-images.md",
             "Handle missing images" => "how-to/handle-missing-images.md",
@@ -31,6 +32,7 @@ makedocs(;
         ],
         "Explanation" => [
             "Concepts" => "explanation/index.md",
+            "About PaleobiologyDB workflows" => "explanation/paleobiologydb-workflows.md",
         ],
         "API reference" => [
             "Rendering"  => "api/rendering.md",
