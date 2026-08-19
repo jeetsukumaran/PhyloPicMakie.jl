@@ -5,6 +5,7 @@ DocMeta.setdocmeta!(PhyloPicMakie, :DocTestSetup, :(using PhyloPicMakie); recurs
 
 makedocs(;
     modules=[PhyloPicMakie, PhyloPicMakie.PhyloPicDB],
+    checkdocs = :exports,
     authors="Jeet Sukumaran <jeetsukumaran@gmail.com>",
     sitename="PhyloPicMakie.jl",
     format=Documenter.HTML(;

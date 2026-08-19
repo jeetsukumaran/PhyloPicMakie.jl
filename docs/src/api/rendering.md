@@ -4,27 +4,20 @@ CurrentModule = PhyloPicMakie
 
 # Rendering API
 
-Use this page when you need signatures, keyword meanings, return values, and
-error behavior for silhouette plotting.
+This reference lists the public plotting and thumbnail-gallery APIs, including
+their signatures, keyword arguments, return behavior, and errors.
 
-For task help, see [GraphMakie snapshots](../how-to/graphmakie-node-positions.md),
-[placement](../how-to/adjust-placement.md), [thumbnail
-galleries](../how-to/thumbnail-gallery.md), [missing
-images](../how-to/handle-missing-images.md), and [PBDB
-workflows](../explanation/paleobiologydb-workflows.md).
-
-For the common path, pass one PhyloPic node UUID per point, range, or table
-row with `node_uuid`. If another package resolves taxon names or PBDB records
-to PhyloPic node UUIDs, pass those UUIDs here. For PBDB-integrated
-taxon-name resolution, see [`PaleobiologyDB.PBDBMakie`](https://jeetsukumaran.github.io/PaleobiologyDB.jl/dev/api/phylopic_makie/).
-
-If you already have decoded image matrices, use `glyph` or the
-vector-with-images method. Direct `node_uuid` plotting resolves repeated UUIDs
-once within a plotting call. For repeated PhyloPic API queries across calls,
-use `PhyloPicMakie.PhyloPicDB.batch_primary_images` or
-`PhyloPicMakie.PhyloPicDB.batch_images`; those functions call
-`DataCaches.autocache` in `src/PhyloPicDB/_bulk.jl`.
+For task guidance, see the [tutorial](../tutorial.md), [place silhouettes on
+points](../how-to/points.md), [place silhouettes on
+ranges](../how-to/ranges.md), [use table columns](../how-to/table-columns.md),
+[adjust silhouette placement](../how-to/adjust-placement.md), [build a
+thumbnail gallery](../how-to/thumbnail-gallery.md), [handle missing
+images](../how-to/handle-missing-images.md), and [choose PhyloPic
+images](../how-to/choose-phylopic-images.md).
 
 ```@autodocs
 Modules = [PhyloPicMakie]
+Private = false
+Order = [:function]
+Pages = ["_augment_api.jl", "_node_thumbnail_grid.jl", "_thumbnail_grid.jl"]
 ```
