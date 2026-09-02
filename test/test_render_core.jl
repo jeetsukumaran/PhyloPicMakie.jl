@@ -22,14 +22,28 @@ const _TEST_IMG = fill(0.5f0, 4, 8)
 
 _materialize!(fig) = CairoMakie.Makie.update_state_before_display!(fig)
 
-function _overlay_plots(ax)
-    return filter(ax.scene.plots) do plot
-        hasproperty(plot, :marker) || return false
-        marker = plot.marker[]
-        marker isa AbstractVector || return false
-        isempty(marker) && return false
-        return first(marker) isa AbstractMatrix
+function _image_scatter_children(plot)
+    matches = CairoMakie.Makie.Plot[]
+    for child in plot.plots
+        if hasproperty(child, :marker)
+            markers = child.marker[]
+            if markers isa AbstractVector &&
+                    !isempty(markers) &&
+                    first(markers) isa AbstractMatrix
+                push!(matches, child)
+            end
+        end
+        append!(matches, _image_scatter_children(child))
     end
+    return matches
+end
+
+function _overlay_plots(ax)
+    matches = CairoMakie.Makie.Plot[]
+    for plot in ax.scene.plots
+        append!(matches, _image_scatter_children(plot))
+    end
+    return matches
 end
 
 _count_glyph_overlays(ax) = length(_overlay_plots(ax))
@@ -54,20 +68,22 @@ const _AUGMENT_KW = (
 
     @testset "nothing image, on_missing=:skip -> no glyph overlay added" begin
         fig = Figure(); ax = Axis(fig[1, 1])
-        PhyloPicMakie.augment_phylopic!(
+        plot = PhyloPicMakie.augment_phylopic!(
             ax, [0.0], [0.0], [nothing];
             _AUGMENT_KW..., on_missing = :skip
         )
+        @test plot isa PhyloPicMakie.PhyloPicGlyphs
         _materialize!(fig)
         @test _count_glyph_overlays(ax) == 0
     end
 
     @testset "nothing image, on_missing=:placeholder -> placeholder overlay added" begin
         fig = Figure(); ax = Axis(fig[1, 1])
-        PhyloPicMakie.augment_phylopic!(
+        plot = PhyloPicMakie.augment_phylopic!(
             ax, [0.0], [0.0], [nothing];
             _AUGMENT_KW..., on_missing = :placeholder
         )
+        @test plot isa PhyloPicMakie.PhyloPicGlyphs
         _materialize!(fig)
         @test _count_glyph_overlays(ax) == 1
         overlay = only(_overlay_plots(ax))
@@ -76,10 +92,11 @@ const _AUGMENT_KW = (
 
     @testset "pre-resolved image matrix rendered without taxon resolution" begin
         fig = Figure(); ax = Axis(fig[1, 1])
-        PhyloPicMakie.augment_phylopic!(
+        plot = PhyloPicMakie.augment_phylopic!(
             ax, [0.0], [0.0], [_TEST_IMG];
             _AUGMENT_KW...
         )
+        @test plot isa PhyloPicMakie.PhyloPicGlyphs
         _materialize!(fig)
         @test _count_glyph_overlays(ax) == 1
     end
@@ -91,11 +108,18 @@ const _AUGMENT_KW = (
         )
     end
 
-    @testset "on_missing=:error and nothing image throws ErrorException" begin
+    @testset "on_missing=:error reports the missing image" begin
         fig = Figure(); ax = Axis(fig[1, 1])
-        @test_throws ErrorException PhyloPicMakie.augment_phylopic!(
-            ax, [0.0], [0.0], [nothing]; _AUGMENT_KW..., on_missing = :error
-        )
+        caught = try
+            PhyloPicMakie.augment_phylopic!(
+                ax, [0.0], [0.0], [nothing]; _AUGMENT_KW..., on_missing = :error
+            )
+            nothing
+        catch error
+            error
+        end
+        @test !isnothing(caught)
+        @test occursin("missing image for data point 1", sprint(showerror, caught))
     end
 
 end  # augment_phylopic! pre-resolved
@@ -112,13 +136,15 @@ end  # augment_phylopic! pre-resolved
         )
         @test result.figure isa Figure
         @test result.axis isa Axis
+        @test result.plot isa PhyloPicMakie.PhyloPicGlyphs
         @test result.axis.title[] == "Factory result"
         _materialize!(result.figure)
         @test _count_glyph_overlays(result.axis) == 1
 
-        fig, ax = result
+        fig, ax, plot = result
         @test fig === result.figure
         @test ax === result.axis
+        @test plot === result.plot
     end
 
     @testset "node-UUID API factory accepts a preloaded glyph" begin
@@ -130,6 +156,7 @@ end  # augment_phylopic! pre-resolved
         _materialize!(result.figure)
         @test result.figure isa Figure
         @test result.axis isa Axis
+        @test result.plot isa PhyloPicMakie.PhyloPicGlyphs
         @test _count_glyph_overlays(result.axis) == 1
     end
 
@@ -142,6 +169,7 @@ end  # augment_phylopic! pre-resolved
             glyph = _TEST_IMG,
         )
         _materialize!(result.figure)
+        @test result.plot isa PhyloPicMakie.PhyloPicGlyphs
         @test _count_glyph_overlays(result.axis) == 1
     end
 
@@ -161,24 +189,26 @@ end  # augment_phylopic factories
 
     @testset "at=:midpoint, pre-resolved image -> one overlay" begin
         fig = Figure(); ax = Axis(fig[1, 1])
-        PhyloPicMakie.augment_phylopic_ranges!(
+        plot = PhyloPicMakie.augment_phylopic_ranges!(
             ax, [10.0], [20.0], [1.0], [_TEST_IMG];
             glyph_size = 1.0, aspect = :preserve, placement = :center,
             xoffset = 0.0, yoffset = 0.0, rotation = 0.0, mirror = false,
             on_missing = :skip, at = :midpoint
         )
+        @test plot isa PhyloPicMakie.PhyloPicGlyphs
         _materialize!(fig)
         @test _count_glyph_overlays(ax) == 1
     end
 
     @testset "at=:start, pre-resolved image -> one overlay" begin
         fig = Figure(); ax = Axis(fig[1, 1])
-        PhyloPicMakie.augment_phylopic_ranges!(
+        plot = PhyloPicMakie.augment_phylopic_ranges!(
             ax, [10.0], [20.0], [1.0], [_TEST_IMG];
             glyph_size = 1.0, aspect = :preserve, placement = :center,
             xoffset = 0.0, yoffset = 0.0, rotation = 0.0, mirror = false,
             on_missing = :skip, at = :start
         )
+        @test plot isa PhyloPicMakie.PhyloPicGlyphs
         _materialize!(fig)
         @test _count_glyph_overlays(ax) == 1
     end
@@ -208,6 +238,7 @@ end  # augment_phylopic_ranges! pre-resolved
         _materialize!(result.figure)
         @test result.figure isa Figure
         @test result.axis isa Axis
+        @test result.plot isa PhyloPicMakie.PhyloPicGlyphs
         @test _count_glyph_overlays(result.axis) == 1
     end
 
@@ -222,6 +253,7 @@ end  # augment_phylopic_ranges! pre-resolved
             at = :stop,
         )
         _materialize!(result.figure)
+        @test result.plot isa PhyloPicMakie.PhyloPicGlyphs
         @test _count_glyph_overlays(result.axis) == 1
     end
 

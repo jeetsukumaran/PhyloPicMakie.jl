@@ -16,12 +16,11 @@ function _next_page_url(obj)::Union{String, Nothing}
         error("_fetch_hal_pages: response did not contain `_links.next`.")
     end
     isnothing(next_link) && return nothing
-    href = try
-        string(next_link.href)
-    catch
-        ""
-    end
-    isempty(href) && return nothing
+    hasproperty(next_link, :href) || error(
+        "_fetch_hal_pages: non-empty `_links.next` did not contain `href`."
+    )
+    href = string(next_link.href)
+    isempty(href) && error("_fetch_hal_pages: `_links.next.href` was empty.")
     return _absolute_phylopic_url(href)
 end
 

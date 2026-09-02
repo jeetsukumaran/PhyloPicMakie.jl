@@ -75,10 +75,38 @@
     )
 
     failing_request = FakePhyloPicRequest(url -> error("offline: $url"))
+    @test_throws ErrorException PhyloPicDB.fetch_image(
+        "missing";
+        build = 537,
+        request = failing_request,
+    )
+    @test_throws ErrorException PhyloPicDB.fetch_images(
+        "missing";
+        build = 537,
+        request = failing_request,
+    )
+
+    not_found_request = FakePhyloPicRequest(
+        url -> throw(
+            HTTP.Exceptions.StatusError(
+                404,
+                "GET",
+                String(url),
+                HTTP.Response(404),
+            )
+        )
+    )
     @test isnothing(
-        PhyloPicDB.fetch_image("missing"; build = 537, request = failing_request)
+        PhyloPicDB.fetch_image("missing"; build = 537, request = not_found_request)
     )
     @test isempty(
-        PhyloPicDB.fetch_images("missing"; build = 537, request = failing_request)
+        PhyloPicDB.fetch_images("missing"; build = 537, request = not_found_request)
+    )
+
+    malformed_request = FakePhyloPicRequest(url -> _json_response(Dict("uuid" => "")))
+    @test_throws ErrorException PhyloPicDB.fetch_image(
+        "malformed";
+        build = 537,
+        request = malformed_request,
     )
 end

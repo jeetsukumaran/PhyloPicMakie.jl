@@ -22,13 +22,14 @@ PhyloPicMakie.PhyloPicDB       ← the PhyloPicDB data-access module
 
 | Function | Description |
 |---|---|
-| `augment_phylopic!(ax, xs, ys; taxon, ...)` | Discover and add one glyph per datum at explicit `(x, y)` coordinates |
-| `augment_phylopic(xs, ys; taxon, ...)` | Create and return `(; figure, axis)` |
-| `augment_phylopic!(ax, xs, ys, images; ...)` | Low-level: render pre-resolved image matrices |
-| `augment_phylopic_ranges!(ax, xstart, xstop, y; taxon, ...)` | Glyphs anchored to range endpoints |
-| `augment_phylopic_ranges(xstart, xstop, y; taxon, ...)` | Create and return `(; figure, axis)` |
-| `augment_phylopic!(ax, table; x, y, taxon, ...)` | Table-oriented variant |
-| `augment_phylopic_ranges!(ax, table; xstart, xstop, y, taxon, ...)` | Table range variant |
+| `phylopicglyphs[!](positions, images; ...)` | Native, discovery-free `PhyloPicGlyphs` recipe |
+| `augment_phylopic!(parent, xs, ys; taxon, ...)` | Discover and add one glyph per datum; return the recipe plot |
+| `augment_phylopic(xs, ys; taxon, ...)` | Create and return `Makie.FigureAxisPlot` |
+| `augment_phylopic!(parent, xs, ys, images; ...)` | Low-level convenience wrapper for decoded image matrices |
+| `augment_phylopic_ranges!(parent, xstart, xstop, y; taxon, ...)` | Range-relative glyphs; return the recipe plot |
+| `augment_phylopic_ranges(xstart, xstop, y; taxon, ...)` | Create and return `Makie.FigureAxisPlot` |
+| `augment_phylopic!(parent, table; x, y, taxon, ...)` | Table-oriented variant |
+| `augment_phylopic_ranges!(parent, table; xstart, xstop, y, taxon, ...)` | Table range variant |
 
 All vector-API variants accept exactly one of `taxon`, `node_uuid`, or a
 preloaded `glyph::AbstractMatrix`.
@@ -56,7 +57,6 @@ covered by the public compatibility policy:
 | `_resolve_images_by_uuid(uuids, glyph, n; ...)` | UUID vector → image matrix vector |
 | `_resolve_taxon_node_uuids(taxa, resolver, n; ...)` | Taxon queries → node UUID vector |
 | `_compute_image_bbox(x, y, w, h; ...)` | Data-space bounding box with scale correction |
-| `_augment_phylopic_anchored!(ax, anchors, images; ...)` | Render data-space or pixel-space anchors |
 | `_augment_resolved_phylopic_anchored!(parent, anchors, images; ...)` | Shared render-preparation path for pre-resolved images |
 | `_axis_scale_correction_obs(scene)` | Reactive `(ypx/unit) / (xpx/unit)` correction |
 | `_apply_rotation(img, deg)` | Rotate image matrix by multiples of 90° |
@@ -84,12 +84,16 @@ export augment_phylopic!
 export augment_phylopic
 export augment_phylopic_ranges!
 export augment_phylopic_ranges
+export PhyloPicGlyphs
+export phylopicglyphs
+export phylopicglyphs!
 export phylopic_thumbnail_grid!
 export phylopic_thumbnail_grid
 
 include("_image_cache.jl")
 include("_coordinates.jl")
 include("_anchored_overlay.jl")
+include("_phylopic_glyphs.jl")
 include("_render_core.jl")
 include("_thumbnail_grid.jl")
 include("_glyph_resolution.jl")

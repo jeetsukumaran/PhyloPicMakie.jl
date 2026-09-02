@@ -102,8 +102,8 @@ requires exactly one HTTP round trip (plus one additional round trip when
 
 # Returns
 
-A [`PhyloPicImage`](@ref), or `nothing` if the node has no primary image or
-the request fails.
+A [`PhyloPicImage`](@ref), or `nothing` if the node is not found or has no
+primary image. Operational and malformed-response errors are propagated.
 
 # Examples
 

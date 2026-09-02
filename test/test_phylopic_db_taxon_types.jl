@@ -30,4 +30,35 @@
     namespace = PhyloPicDB.ExternalTaxonNamespace("gbif.org", "species")
     @test identifier.object_id == "1"
     @test namespace.authority == "gbif.org"
+
+    @test_throws ArgumentError PhyloPicDB.TaxonResolution(
+        "Invalid resolved taxon",
+        "invalid resolved taxon",
+        PhyloPicDB.PhyloPicResolver(),
+        PhyloPicDB.TAXON_RESOLVED,
+        PhyloPicDB.PREFERRED_NAME_MATCH,
+        nothing,
+        PhyloPicDB.PhyloPicNode[],
+        String[],
+        PhyloPicDB.ExternalTaxonIdentifier[],
+        nothing,
+        nothing,
+        nothing,
+        nothing,
+    )
+    @test_throws ArgumentError PhyloPicDB.TaxonResolution(
+        "Invalid absent taxon",
+        "invalid absent taxon",
+        PhyloPicDB.PhyloPicResolver(),
+        PhyloPicDB.TAXON_NOT_FOUND,
+        PhyloPicDB.PREFERRED_NAME_MATCH,
+        node,
+        PhyloPicDB.PhyloPicNode[],
+        String[],
+        PhyloPicDB.ExternalTaxonIdentifier[],
+        nothing,
+        nothing,
+        nothing,
+        nothing,
+    )
 end

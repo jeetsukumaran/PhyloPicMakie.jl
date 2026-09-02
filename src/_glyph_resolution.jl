@@ -6,6 +6,7 @@
         image_rendering::Symbol = :thumbnail,
         build::Union{Int, Nothing} = nothing,
         request = PhyloPicDB.phylopic_get,
+        loader = _load_phylopic_image,
     ) -> Vector{Union{Matrix{RGBA{N0f8}}, Nothing}}
 
 For each of the `n` data points, return either a decoded image matrix or
@@ -22,9 +23,10 @@ Exactly one of `node_uuids` or `glyph` must be non-`nothing`:
 `image_rendering` controls which URL is fetched; see
 [`_select_image_url`](@ref) for the full symbol table.
 
-`nothing` entries in `node_uuids`, as well as UUIDs for which image
-resolution fails, produce `nothing` in the output.  The caller handles
-these according to its `on_missing` policy.
+`nothing` entries in `node_uuids`, absent primary images, and absent selected
+rendering URLs produce `nothing` in the output. The caller handles these
+semantic absences according to its `on_missing` policy. Operational request,
+download, and decode failures are propagated.
 """
 function _resolve_images_by_uuid(
         node_uuids::Union{AbstractVector{<:Union{AbstractString, Nothing}}, Nothing},
@@ -33,6 +35,7 @@ function _resolve_images_by_uuid(
         image_rendering::Symbol = :thumbnail,
         build::Union{Int, Nothing} = nothing,
         request = PhyloPicDB.phylopic_get,
+        loader = _load_phylopic_image,
     )::Vector{Union{Matrix{RGBA{N0f8}}, Nothing}}
     if !isnothing(glyph)
         # Broadcast the single pre-loaded image to every data point.
@@ -67,12 +70,7 @@ function _resolve_images_by_uuid(
             if ismissing(url)
                 image_cache[uuid] = nothing
             else
-                try
-                    image_cache[uuid] = _load_phylopic_image(url)
-                catch err
-                    @warn "_resolve_images_by_uuid: could not load image for UUID \"$uuid\"" exception = err
-                    image_cache[uuid] = nothing
-                end
+                image_cache[uuid] = loader(url)
             end
         end
     end

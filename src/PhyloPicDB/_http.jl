@@ -9,6 +9,10 @@ Base URL for the PhyloPic REST API.
 """
 const PHYLOPIC_BASE_URL = "https://api.phylopic.org"
 
+function _is_not_found_error(err)::Bool
+    return err isa HTTP.Exceptions.StatusError && Int(err.status) == 404
+end
+
 """
     phylopic_get(
         url;

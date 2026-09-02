@@ -75,6 +75,18 @@ Semantic outcomes use `TAXON_RESOLVED`, `TAXON_AMBIGUOUS`, and
 `TAXON_NOT_FOUND`. Network and malformed-response failures throw instead of
 being represented as taxonomic misses.
 
+## Absence and failure contract
+
+Semantic absence is represented only where the public return type documents
+it. For example, `fetch_node`, `fetch_image`, and `resolve_node` return
+`nothing` for a 404, while `fetch_images` returns an empty vector. A
+`TaxonResolution` may have `TAXON_NOT_FOUND` only after a successful request
+establishes that outcome.
+
+Timeouts, non-404 HTTP errors, malformed JSON or HAL pagination, missing
+required UUIDs, and inconsistent resolution records throw. These failures do
+not become `nothing`, empty collections, or `TAXON_NOT_FOUND`.
+
 ## External taxonomy providers
 
 Provider selection is explicit. `GBIFResolver` uses exact GBIF matches and

@@ -10,16 +10,16 @@
 #
 # Call graph:
 #
-#   augment_phylopic!                         (axis-mutating vector API)
+#   augment_phylopic!                         (parent-composing vector API)
 #   augment_phylopic                          (figure/axis vector factory)
 #   augment_phylopic! / augment_phylopic      (table APIs)
-#   augment_phylopic_ranges!                  (axis-mutating range vector API)
+#   augment_phylopic_ranges!                  (parent-composing range vector API)
 #   augment_phylopic_ranges                   (figure/axis range vector factory)
 #   augment_phylopic_ranges! / augment_phylopic_ranges (range table APIs)
 #       ├─► _resolve_taxon_node_uuids(taxa, resolver, n; ...)
 #       └─► _resolve_images_by_uuid(node_uuids, glyph, n; image_rendering)
-#               └─► augment_phylopic!(ax, xs, ys, images; ...)  [_render_core.jl]
-#                       └─► _augment_phylopic_anchored!(...)   [_anchored_overlay.jl]
+#               └─► augment_phylopic!(parent, xs, ys, images; ...)  [_render_core.jl]
+#                       └─► phylopicglyphs!(parent, ...)        [_phylopic_glyphs.jl]
 # ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
@@ -76,7 +76,7 @@ end
 
 """
     augment_phylopic!(
-        ax::Makie.Axis,
+        parent,
         x::AbstractVector{<:Real},
         y::AbstractVector{<:Real};
         node_uuid::Union{AbstractVector, Nothing} = nothing,
@@ -96,10 +96,11 @@ end
         on_ambiguous::Symbol = :error,
         request = PhyloPicDB.phylopic_get,
         taxonomy_request = nothing,
-    ) -> Nothing
+    ) -> PhyloPicGlyphs
 
-Add one PhyloPic silhouette glyph per datum to an existing Makie axis `ax`,
-anchored at positions `(x[i], y[i])` in axis data coordinates.
+Add one PhyloPic silhouette glyph per datum to an existing Makie `parent`,
+anchored at positions `(x[i], y[i])` in data coordinates. The parent may be
+an axis, scene, or plot accepted by Makie's normal recipe composition API.
 
 This is the PhyloPic-native public API. It can discover nodes from taxon names,
 use already-known node UUIDs, or render a preloaded glyph.
@@ -161,8 +162,8 @@ use already-known node UUIDs, or render a preloaded glyph.
 
 ## Returns
 
-`Nothing`.  The glyphs are added as side-effects to `ax` through the shared
-internal anchored-overlay substrate.
+A [`PhyloPicGlyphs`](@ref) plot. Use the returned handle for reactive updates,
+visibility, inspection, and deletion through Makie's normal plot lifecycle.
 
 ## Examples
 
@@ -184,7 +185,7 @@ augment_phylopic!(
 ```
 """
 function augment_phylopic!(
-        ax::Makie.Axis,
+        parent,
         x::AbstractVector{<:Real},
         y::AbstractVector{<:Real};
         node_uuid::Union{AbstractVector, Nothing} = nothing,
@@ -204,30 +205,19 @@ function augment_phylopic!(
         on_ambiguous::Symbol = :error,
         request = PhyloPicDB.phylopic_get,
         taxonomy_request = nothing,
-    )::Nothing
+    )::PhyloPicGlyphs
     n = length(x)
     length(y) == n || throw(
         ArgumentError(
             "augment_phylopic!: `x` and `y` must have the same length."
         )
     )
-    isnothing(node_uuid) && isnothing(taxon) && isnothing(glyph) && throw(
+    source_count = count(!isnothing, (node_uuid, taxon, glyph))
+    source_count == 1 || throw(
         ArgumentError(
-            "augment_phylopic!: one of `node_uuid`, `taxon`, or `glyph` must be provided."
+            "augment_phylopic!: exactly one of `node_uuid`, `taxon`, or `glyph` must be provided."
         )
     )
-    !isnothing(taxon) && (!isnothing(node_uuid) || !isnothing(glyph)) && throw(
-        ArgumentError(
-            "augment_phylopic!: `taxon` cannot be combined with `node_uuid` or `glyph`."
-        )
-    )
-    if !isnothing(node_uuid) && !isnothing(glyph)
-        Base.depwarn(
-            "passing both `node_uuid` and `glyph` is deprecated; `glyph` continues " *
-                "to take precedence. Pass exactly one image source.",
-            :augment_phylopic!,
-        )
-    end
 
     images = if isnothing(taxon)
         _resolve_images_by_uuid(
@@ -258,7 +248,7 @@ function augment_phylopic!(
         )
     end
     return augment_phylopic!(
-        ax, x, y, images;
+        parent, x, y, images;
         glyph_size = glyph_size,
         aspect = aspect,
         placement = placement,
@@ -277,14 +267,14 @@ end
         figure = (;),
         axis = (;),
         kwargs...,
-    ) -> NamedTuple{(:figure, :axis)}
+    ) -> Makie.FigureAxisPlot
 
 Create a new `Makie.Figure` and `Makie.Axis`, add one PhyloPic silhouette per
-datum, and return `(; figure, axis)`.
+datum, and return Makie's conventional figure-axis-plot result.
 
 Entries in the `figure` and `axis` named tuples or symbol-keyed dictionaries
 are forwarded to the corresponding Makie constructors. Use
-[`augment_phylopic!`](@ref) to add glyphs to an existing axis.
+[`augment_phylopic!`](@ref) to add glyphs to an existing Makie parent.
 
 See [`augment_phylopic!`](@ref) for the full keyword-argument documentation.
 """
@@ -294,10 +284,10 @@ function augment_phylopic(
         figure::_FigureOrAxisSettings = (;),
         axis::_FigureOrAxisSettings = (;),
         kwargs...,
-    )::_FigureAxisResult
+    )::Makie.FigureAxisPlot
     result = _new_figure_axis(figure, axis)
-    augment_phylopic!(result.axis, x, y; kwargs...)
-    return result
+    plot = augment_phylopic!(result.axis, x, y; kwargs...)
+    return Makie.FigureAxisPlot(result.figure, result.axis, plot)
 end
 
 # ---------------------------------------------------------------------------
@@ -306,7 +296,7 @@ end
 
 """
     augment_phylopic_ranges!(
-        ax::Makie.Axis,
+        parent,
         xstart::AbstractVector{<:Real},
         xstop::AbstractVector{<:Real},
         y::AbstractVector{<:Real};
@@ -314,9 +304,9 @@ end
         glyph::Union{AbstractMatrix, Nothing} = nothing,
         at::Symbol = :start,
         kwargs...,
-    ) -> Nothing
+    ) -> PhyloPicGlyphs
 
-Add one PhyloPic silhouette per datum to `ax`, anchored relative to a range
+Add one PhyloPic silhouette per datum to `parent`, anchored relative to a range
 `(xstart[i], xstop[i])` at vertical position `y[i]`.
 
 This is the **PhyloPic-native** range-based convenience wrapper for range
@@ -338,7 +328,7 @@ the range endpoints and then calls [`augment_phylopic!`](@ref).
 
 ## Returns
 
-`Nothing`.
+A [`PhyloPicGlyphs`](@ref) plot.
 
 ## Examples
 
@@ -361,13 +351,13 @@ augment_phylopic_ranges!(
 ```
 """
 function augment_phylopic_ranges!(
-        ax::Makie.Axis,
+        parent,
         xstart::AbstractVector{<:Real},
         xstop::AbstractVector{<:Real},
         y::AbstractVector{<:Real};
         at::Symbol = :start,
         kwargs...,
-    )::Nothing
+    )::PhyloPicGlyphs
     n = length(xstart)
     length(xstop) == n || throw(
         ArgumentError(
@@ -380,7 +370,7 @@ function augment_phylopic_ranges!(
         )
     )
     xs = [_range_anchor(Float64(xstart[i]), Float64(xstop[i]), at) for i in 1:n]
-    return augment_phylopic!(ax, xs, y; kwargs...)
+    return augment_phylopic!(parent, xs, y; kwargs...)
 end
 
 """
@@ -391,10 +381,10 @@ end
         figure = (;),
         axis = (;),
         kwargs...,
-    ) -> NamedTuple{(:figure, :axis)}
+    ) -> Makie.FigureAxisPlot
 
 Create a new `Makie.Figure` and `Makie.Axis`, add one PhyloPic silhouette per
-range, and return `(; figure, axis)`.
+range, and return Makie's conventional figure-axis-plot result.
 
 See [`augment_phylopic_ranges!`](@ref) for full documentation.
 """
@@ -405,10 +395,10 @@ function augment_phylopic_ranges(
         figure::_FigureOrAxisSettings = (;),
         axis::_FigureOrAxisSettings = (;),
         kwargs...,
-    )::_FigureAxisResult
+    )::Makie.FigureAxisPlot
     result = _new_figure_axis(figure, axis)
-    augment_phylopic_ranges!(result.axis, xstart, xstop, y; kwargs...)
-    return result
+    plot = augment_phylopic_ranges!(result.axis, xstart, xstop, y; kwargs...)
+    return Makie.FigureAxisPlot(result.figure, result.axis, plot)
 end
 
 # ---------------------------------------------------------------------------
@@ -417,14 +407,14 @@ end
 
 """
     augment_phylopic!(
-        ax::Makie.Axis,
+        parent,
         table;
         x,
         y,
         node_uuid = nothing,
         glyph = nothing,
         kwargs...,
-    ) -> Nothing
+    ) -> PhyloPicGlyphs
 
 Table-oriented variant of [`augment_phylopic!`](@ref).
 
@@ -446,7 +436,7 @@ forwards to the vector API.
 
 ## Returns
 
-`Nothing`.
+A [`PhyloPicGlyphs`](@ref) plot.
 
 ## Examples
 
@@ -466,7 +456,7 @@ augment_phylopic!(ax, df; x = :x, y = :y, node_uuid = :uuid, glyph_size = 0.4)
 ```
 """
 function augment_phylopic!(
-        ax::Makie.Axis,
+        parent,
         table;
         x,
         y,
@@ -474,23 +464,23 @@ function augment_phylopic!(
         taxon = nothing,
         glyph::Union{AbstractMatrix, Nothing} = nothing,
         kwargs...,
-    )::Nothing
+    )::PhyloPicGlyphs
     xs = _extract_column(table, x)
     ys = _extract_column(table, y)
     uuids = isnothing(node_uuid) ? nothing : _extract_column(table, node_uuid)
     taxa = isnothing(taxon) ? nothing : _extract_column(table, taxon)
     return augment_phylopic!(
-        ax, xs::AbstractVector{<:Real}, ys::AbstractVector{<:Real};
+        parent, xs::AbstractVector{<:Real}, ys::AbstractVector{<:Real};
         node_uuid = uuids, taxon = taxa, glyph = glyph, kwargs...,
     )
 end
 
 """
     augment_phylopic(table; figure = (;), axis = (;), kwargs...)
-        -> NamedTuple{(:figure, :axis)}
+        -> Makie.FigureAxisPlot
 
-Create a new figure and axis from table columns and return
-`(; figure, axis)`.
+Create a new figure and axis from table columns and return Makie's
+conventional figure-axis-plot result.
 
 See [`augment_phylopic!`](@ref) for full documentation.
 """
@@ -504,7 +494,7 @@ function augment_phylopic(
         taxon = nothing,
         glyph::Union{AbstractMatrix, Nothing} = nothing,
         kwargs...,
-    )::_FigureAxisResult
+    )::Makie.FigureAxisPlot
     xs = _extract_column(table, x)
     ys = _extract_column(table, y)
     uuids = isnothing(node_uuid) ? nothing : _extract_column(table, node_uuid)
@@ -527,7 +517,7 @@ end
 
 """
     augment_phylopic_ranges!(
-        ax::Makie.Axis,
+        parent,
         table;
         xstart,
         xstop,
@@ -536,7 +526,7 @@ end
         glyph = nothing,
         at::Symbol = :start,
         kwargs...,
-    ) -> Nothing
+    ) -> PhyloPicGlyphs
 
 Table-oriented variant of [`augment_phylopic_ranges!`](@ref).
 
@@ -558,7 +548,7 @@ to the vector range API.
 
 ## Returns
 
-`Nothing`.
+A [`PhyloPicGlyphs`](@ref) plot.
 
 ## Examples
 
@@ -587,7 +577,7 @@ augment_phylopic_ranges!(
 ```
 """
 function augment_phylopic_ranges!(
-        ax::Makie.Axis,
+        parent,
         table;
         xstart,
         xstop,
@@ -597,14 +587,14 @@ function augment_phylopic_ranges!(
         glyph::Union{AbstractMatrix, Nothing} = nothing,
         at::Symbol = :start,
         kwargs...,
-    )::Nothing
+    )::PhyloPicGlyphs
     xs = _extract_column(table, xstart)
     xe = _extract_column(table, xstop)
     ys = _extract_column(table, y)
     uuids = isnothing(node_uuid) ? nothing : _extract_column(table, node_uuid)
     taxa = isnothing(taxon) ? nothing : _extract_column(table, taxon)
     return augment_phylopic_ranges!(
-        ax,
+        parent,
         xs::AbstractVector{<:Real},
         xe::AbstractVector{<:Real},
         ys::AbstractVector{<:Real};
@@ -614,10 +604,10 @@ end
 
 """
     augment_phylopic_ranges(table; figure = (;), axis = (;), kwargs...)
-        -> NamedTuple{(:figure, :axis)}
+        -> Makie.FigureAxisPlot
 
-Create a new figure and axis from table range columns and return
-`(; figure, axis)`.
+Create a new figure and axis from table range columns and return Makie's
+conventional figure-axis-plot result.
 
 See [`augment_phylopic_ranges!`](@ref) for full documentation.
 """
@@ -633,7 +623,7 @@ function augment_phylopic_ranges(
         glyph::Union{AbstractMatrix, Nothing} = nothing,
         at::Symbol = :start,
         kwargs...,
-    )::_FigureAxisResult
+    )::Makie.FigureAxisPlot
     xs = _extract_column(table, xstart)
     xe = _extract_column(table, xstop)
     ys = _extract_column(table, y)

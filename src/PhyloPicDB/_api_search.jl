@@ -77,7 +77,10 @@ function search_nodes(
         first_url,
         item -> begin
             node = _parse_node_json(item, b)
-            isempty(node.uuid) ? nothing : node
+            isempty(node.uuid) && error(
+                "search_nodes: response contained a node without a UUID."
+            )
+            node
         end;
         max_pages,
         request,

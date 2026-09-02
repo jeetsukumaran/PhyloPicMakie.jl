@@ -34,13 +34,31 @@
     @test isnothing(PhyloPicDB.resolve_pbdb_node(Int[]))
 
     failing_request = FakePhyloPicRequest(url -> error("offline: $url"))
+    @test_throws ErrorException PhyloPicDB.resolve_node(
+        "gbif.org",
+        "species",
+        ["1"];
+        build = 537,
+        request = failing_request,
+    )
+
+    not_found_request = FakePhyloPicRequest(
+        url -> throw(
+            HTTP.Exceptions.StatusError(
+                404,
+                "GET",
+                String(url),
+                HTTP.Response(404),
+            )
+        )
+    )
     @test isnothing(
         PhyloPicDB.resolve_node(
             "gbif.org",
             "species",
             ["1"];
             build = 537,
-            request = failing_request,
+            request = not_found_request,
         )
     )
 end

@@ -1,5 +1,4 @@
-# test/test_makie_integration.jl
-# Makie-level reactive integration checks for the anchored-overlay substrate.
+# Makie-level reactive integration checks for the PhyloPicGlyphs recipe.
 
 _materialize_integration!(fig) = CairoMakie.Makie.update_state_before_display!(fig)
 
@@ -14,84 +13,75 @@ _materialize_integration!(fig) = CairoMakie.Makie.update_state_before_display!(f
     @test sc > 0.0
 end
 
-@testset "PhyloPicMakie - data-anchor overlays react to resize and relimit" begin
+@testset "PhyloPicMakie - data-space recipe reacts to resize and relimit" begin
     fig = Figure(size = (400, 400))
     ax = Axis(fig[1, 1])
     xlims!(ax, -4, 4)
     ylims!(ax, -2, 2)
 
-    overlay = PhyloPicMakie._augment_phylopic_anchored!(
+    recipe = PhyloPicMakie.augment_phylopic!(
         ax,
-        [Point2f(0, 0)],
+        [0.0],
+        [0.0],
         [_TEST_IMG];
-        anchor_space = :data,
-        glyph_size_space = :data,
         glyph_size = 1.0,
-        aspect = :preserve,
-        placement = :center,
-        xoffset = 0.0,
-        yoffset = 0.0,
     )
     _materialize_integration!(fig)
+    glyph_scatter = only(_image_scatter_children(recipe))
 
-    size_1 = only(overlay.markersize[])
+    size_1 = only(glyph_scatter.markersize[])
     @test size_1[1] / size_1[2] ≈ 2.0f0 atol = 0.05f0
     @test size_1[2] > 0.0f0
 
     resize!(fig.scene, 800, 800)
     _materialize_integration!(fig)
-    size_2 = only(overlay.markersize[])
+    size_2 = only(glyph_scatter.markersize[])
     @test size_2[2] > size_1[2]
     @test size_2[1] / size_2[2] ≈ 2.0f0 atol = 0.05f0
 
     ylims!(ax, -4, 4)
     _materialize_integration!(fig)
-    size_3 = only(overlay.markersize[])
+    size_3 = only(glyph_scatter.markersize[])
     @test size_3[2] < size_2[2]
     @test size_3[1] / size_3[2] ≈ 2.0f0 atol = 0.05f0
 end
 
-@testset "PhyloPicMakie - overlay teardown removes probe plots and autolimit drift" begin
+@testset "PhyloPicMakie - recipe visibility and teardown control autolimits" begin
     fig = Figure(size = (400, 400))
     ax = Axis(fig[1, 1])
     scatter!(ax, [Point2f(0, 0)])
 
-    overlay = PhyloPicMakie._augment_phylopic_anchored!(
+    recipe = PhyloPicMakie.augment_phylopic!(
         ax,
-        [Point2f(10, 0)],
+        [10.0],
+        [0.0],
         [_TEST_IMG];
-        anchor_space = :data,
-        glyph_size_space = :data,
         glyph_size = 1.0,
-        aspect = :preserve,
-        placement = :center,
-        xoffset = 0.0,
-        yoffset = 0.0,
     )
     _materialize_integration!(fig)
 
-    @test length(overlay.probe_plots) == 4
-    @test length(ax.scene.plots) == 6
+    @test length(recipe.plots) == 2
+    @test length(ax.scene.plots) == 2
 
     CairoMakie.Makie.autolimits!(ax)
     _materialize_integration!(fig)
     visible_limits = ax.finallimits[]
 
-    overlay.visible[] = false
+    CairoMakie.Makie.update!(recipe; visible = false)
     _materialize_integration!(fig)
-    @test all(plot.visible[] == false for plot in overlay.probe_plots)
+    @test all(!plot.visible[] for plot in recipe.plots)
     CairoMakie.Makie.autolimits!(ax)
     _materialize_integration!(fig)
     hidden_limits = ax.finallimits[]
     @test hidden_limits.widths[1] < visible_limits.widths[1] / 10
 
-    overlay.visible[] = true
+    CairoMakie.Makie.update!(recipe; visible = true)
     CairoMakie.Makie.autolimits!(ax)
     _materialize_integration!(fig)
     restored_limits = ax.finallimits[]
     @test restored_limits.widths[1] > hidden_limits.widths[1] * 10
 
-    delete!(ax.scene, overlay)
+    delete!(ax, recipe)
     _materialize_integration!(fig)
     @test length(ax.scene.plots) == 1
     CairoMakie.Makie.autolimits!(ax)
@@ -100,30 +90,26 @@ end
     @test final_limits.widths[1] < visible_limits.widths[1] / 10
 end
 
-@testset "PhyloPicMakie - overlay teardown works when plots are parented to another plot" begin
+@testset "PhyloPicMakie - recipe composes under and deletes with a parent plot" begin
     fig = Figure(size = (400, 400))
     ax = Axis(fig[1, 1])
     parent_plot = scatter!(ax, [Point2f(0, 0)])
 
-    overlay = PhyloPicMakie._augment_phylopic_anchored!(
+    recipe = PhyloPicMakie.augment_phylopic!(
         parent_plot,
-        [Point2f(10, 0)],
+        [10.0],
+        [0.0],
         [_TEST_IMG];
-        anchor_space = :data,
-        glyph_size_space = :data,
         glyph_size = 1.0,
-        aspect = :preserve,
-        placement = :center,
-        xoffset = 0.0,
-        yoffset = 0.0,
     )
     _materialize_integration!(fig)
 
-    @test length(parent_plot.plots) == 5
+    @test recipe in parent_plot.plots
+    @test length(recipe.plots) == 2
 
-    delete!(ax.scene, overlay)
+    delete!(ax, parent_plot)
     _materialize_integration!(fig)
-    @test isempty(parent_plot.plots)
+    @test isempty(ax.scene.plots)
 end
 
 @testset "PhyloPicMakie - projected pixel anchors stay tied to rendered markers" begin
@@ -141,23 +127,23 @@ end
         Point2f[Point2f(p[1], p[2]) for p in positions]
     end
 
-    overlay = PhyloPicMakie._augment_phylopic_anchored!(
+    recipe = PhyloPicMakie.phylopicglyphs!(
         ax,
         pixel_anchor_positions,
         [_TEST_IMG];
-        anchor_space = :pixel,
+        space = :pixel,
         glyph_size_space = :pixel,
         glyph_size = 18.0,
-        aspect = :preserve,
         placement = :bottomleft,
         xoffset = 6.0,
         yoffset = -4.0,
     )
     _materialize_integration!(fig)
+    glyph_scatter = only(_image_scatter_children(recipe))
 
     anchor_1 = only(pixel_anchor_positions[])
-    pos_1 = only(overlay.positions[])
-    size_1 = only(overlay.markersize[])
+    pos_1 = only(glyph_scatter.positions[])
+    size_1 = only(glyph_scatter.markersize[])
     @test pos_1[1] ≈ anchor_1[1] + 6.0f0 atol = 1.0f-3
     @test pos_1[2] ≈ anchor_1[2] - 4.0f0 atol = 1.0f-3
 
@@ -165,8 +151,8 @@ end
     ylims!(ax, -1, 3)
     _materialize_integration!(fig)
     anchor_2 = only(pixel_anchor_positions[])
-    pos_2 = only(overlay.positions[])
-    size_2 = only(overlay.markersize[])
+    pos_2 = only(glyph_scatter.positions[])
+    size_2 = only(glyph_scatter.markersize[])
     @test pos_2[1] ≈ anchor_2[1] + 6.0f0 atol = 1.0f-3
     @test pos_2[2] ≈ anchor_2[2] - 4.0f0 atol = 1.0f-3
     @test size_2[1] ≈ size_1[1] atol = 1.0f-3
@@ -175,8 +161,8 @@ end
     resize!(fig.scene, 700, 500)
     _materialize_integration!(fig)
     anchor_3 = only(pixel_anchor_positions[])
-    pos_3 = only(overlay.positions[])
-    size_3 = only(overlay.markersize[])
+    pos_3 = only(glyph_scatter.positions[])
+    size_3 = only(glyph_scatter.markersize[])
     @test pos_3[1] ≈ anchor_3[1] + 6.0f0 atol = 1.0f-3
     @test pos_3[2] ≈ anchor_3[2] - 4.0f0 atol = 1.0f-3
     @test size_3[1] ≈ size_1[1] atol = 1.0f-3

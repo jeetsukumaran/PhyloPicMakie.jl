@@ -390,7 +390,8 @@ end
     _null_image(build) -> PhyloPicImage
 
 Return a [`PhyloPicImage`](@ref) sentinel with all optional fields set to
-`missing` or `nothing`.  Used to represent a failed or absent image lookup.
+`missing` or `nothing`. Used by internal formatting and offline test helpers;
+operational request failures are not represented by this sentinel.
 
 # Examples
 

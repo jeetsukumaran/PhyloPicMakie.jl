@@ -22,8 +22,8 @@ Fetch a single [`PhyloPicNode`](@ref) by its UUID from the PhyloPic API.
 
 # Returns
 
-A [`PhyloPicNode`](@ref), or `nothing` if the node is not found (404) or any
-other error occurs.
+    A [`PhyloPicNode`](@ref), or `nothing` if the node is not found (404).
+    Operational and malformed-response errors are propagated.
 
 # Examples
 
@@ -37,12 +37,8 @@ function fetch_node(
         build::Union{Int, Nothing} = nothing,
         request = phylopic_get,
     )::Union{PhyloPicNode, Nothing}
-    try
-        b = ensure_build(build; request)
-        return _fetch_node_strict(uuid, b; request)
-    catch
-        return nothing
-    end
+    b = ensure_build(build; request)
+    return _fetch_node_strict(uuid, b; request)
 end
 
 function _fetch_node_strict(
@@ -57,7 +53,7 @@ function _fetch_node_strict(
         isempty(node.uuid) && error("_fetch_node_strict: response did not contain a node UUID.")
         return node
     catch err
-        err isa HTTP.Exceptions.StatusError && err.status == 404 && return nothing
+        _is_not_found_error(err) && return nothing
         rethrow(err)
     end
 end
@@ -70,7 +66,7 @@ Fetch a node and its embedded primary image in a single API request.
 
 Uses `?embed_primaryImage=true` to retrieve both records in one round trip.
 The second element of the returned tuple is `nothing` when the node has no
-primary image or when the image data cannot be parsed.
+primary image. Malformed embedded image data throws.
 
 # Arguments
 
@@ -81,8 +77,10 @@ primary image or when the image data cannot be parsed.
 # Returns
 
 A two-element tuple `(node, image)`:
-- `node`: a [`PhyloPicNode`](@ref), or `nothing` on error.
-- `image`: a [`PhyloPicImage`](@ref), or `nothing` if absent or on error.
+    - `node`: a [`PhyloPicNode`](@ref), or `nothing` when the node is not found.
+    - `image`: a [`PhyloPicImage`](@ref), or `nothing` when no primary image exists.
+
+Operational and malformed-response errors are propagated.
 
 # Examples
 
@@ -104,20 +102,22 @@ function fetch_node_with_primary_image(
         resp = request(url)
         obj = JSON3.read(resp.body)
         node = _parse_node_json(obj, b)
+        isempty(node.uuid) && error(
+            "fetch_node_with_primary_image: response did not contain a node UUID."
+        )
 
-        img = nothing
-        try
-            img_obj = obj._embedded.primaryImage
-            if !isnothing(img_obj)
-                img = _parse_image_json(img_obj, b)
-                # An image with no UUID is effectively absent.
-                isempty(img.uuid) && (img = nothing)
-            end
-        catch
-        end
+        embedded = hasproperty(obj, :_embedded) ? obj._embedded : nothing
+        img_obj = !isnothing(embedded) && hasproperty(embedded, :primaryImage) ?
+            embedded.primaryImage : nothing
+        isnothing(img_obj) && return (node, nothing)
 
+        img = _parse_image_json(img_obj, b)
+        isempty(img.uuid) && error(
+            "fetch_node_with_primary_image: embedded primary image did not contain an image UUID."
+        )
         return (node, img)
-    catch
-        return (nothing, nothing)
+    catch err
+        _is_not_found_error(err) && return (nothing, nothing)
+        rethrow(err)
     end
 end

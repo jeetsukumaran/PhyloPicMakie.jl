@@ -49,6 +49,11 @@ range_result = augment_phylopic_ranges(
     ),
 )
 
+# Both results are Makie.FigureAxisPlot values. The recipe handle is available
+# as `result.plot` for updates, visibility changes, and deletion.
+coordinate_plot = coordinate_result.plot
+range_plot = range_result.plot
+
 if isempty(ARGS) && isinteractive()
     display(coordinate_result.figure)
     display(range_result.figure)

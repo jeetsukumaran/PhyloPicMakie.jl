@@ -30,8 +30,8 @@ Fetch a single [`PhyloPicImage`](@ref) by its UUID from the PhyloPic API.
 
 # Returns
 
-A [`PhyloPicImage`](@ref), or `nothing` if the image is not found or any
-error occurs.
+    A [`PhyloPicImage`](@ref), or `nothing` if the image is not found (404).
+    Operational and malformed-response errors are propagated.
 
 # Examples
 
@@ -54,14 +54,15 @@ function fetch_image(
     try
         resp = request(url)
         img = _parse_image_json(JSON3.read(resp.body), b)
-        isempty(img.uuid) && return nothing
+        isempty(img.uuid) && error("fetch_image: response did not contain an image UUID.")
         if add_node_name && !isnothing(img.specific_node_uuid)
             node = fetch_node(img.specific_node_uuid; build = b, request)
             isnothing(node) || (img = _with_node_name(img, node.preferred_name))
         end
         return img
-    catch
-        return nothing
+    catch err
+        _is_not_found_error(err) && return nothing
+        rethrow(err)
     end
 end
 
@@ -96,8 +97,9 @@ paging through the `/images` list endpoint.
 
 # Returns
 
-A `Vector{PhyloPicImage}`.  An empty vector is returned when the node has no
-images or cannot be resolved.
+    A `Vector{PhyloPicImage}`. An empty vector is returned when the node has no
+    images or is not found (404). Operational and malformed-response errors are
+    propagated.
 
 # Throws
 
@@ -149,12 +151,16 @@ function fetch_images(
             first_url,
             item -> begin
                 image = _parse_image_json(item, b)
-                isempty(image.uuid) ? nothing : image
+                isempty(image.uuid) && error(
+                    "fetch_images: response contained an image without a UUID."
+                )
+                image
             end;
             max_pages,
             request,
         )
-    catch
+    catch err
+        _is_not_found_error(err) || rethrow(err)
         PhyloPicImage[]
     end
 

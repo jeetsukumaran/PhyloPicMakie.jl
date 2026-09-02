@@ -28,18 +28,38 @@
 
     fig = Figure()
     ax = Axis(fig[1, 1])
-    @test isnothing(
-        augment_phylopic!(
-            ax,
-            [1.0, 2.0],
-            [1.0, 2.0];
-            taxon = ["Ursus arctos", "Ursus arctos"],
-            build = 537,
-            request = resolved_request,
-            on_missing = :skip,
-        )
+    taxon_plot = augment_phylopic!(
+        ax,
+        [1.0, 2.0],
+        [1.0, 2.0];
+        taxon = ["Ursus arctos", "Ursus arctos"],
+        build = 537,
+        request = resolved_request,
+        on_missing = :skip,
     )
+    @test taxon_plot isa PhyloPicMakie.PhyloPicGlyphs
     @test count(url -> occursin("embed_primaryImage=true", url), resolved_request.calls) == 1
+
+    image_failure_request = FakePhyloPicRequest(
+        url -> _json_response(_node_with_primary_payload("brown-bear"))
+    )
+    @test_throws ErrorException PhyloPicMakie._resolve_images_by_uuid(
+        ["brown-bear"],
+        nothing,
+        1;
+        build = 537,
+        request = image_failure_request,
+        loader = _ -> error("offline decode failure"),
+    )
+    thumbnail_image = PhyloPicDB._parse_image_json(
+        JSON3.read(JSON3.write(_image_payload("brown-bear-image"))),
+        537,
+    )
+    @test_throws ErrorException PhyloPicMakie._download_image(
+        thumbnail_image,
+        "brown bear";
+        loader = _ -> error("offline gallery decode failure"),
+    )
 
     table = (
         x = [1.0],
@@ -48,29 +68,27 @@
         stop = [1.5],
         scientific_name = ["Ursus arctos"],
     )
-    @test isnothing(
-        augment_phylopic!(
-            ax,
-            table;
-            x = :x,
-            y = :y,
-            taxon = :scientific_name,
-            build = 537,
-            request = resolved_request,
-        )
+    table_plot = augment_phylopic!(
+        ax,
+        table;
+        x = :x,
+        y = :y,
+        taxon = :scientific_name,
+        build = 537,
+        request = resolved_request,
     )
-    @test isnothing(
-        augment_phylopic_ranges!(
-            ax,
-            table;
-            xstart = :start,
-            xstop = :stop,
-            y = :y,
-            taxon = :scientific_name,
-            build = 537,
-            request = resolved_request,
-        )
+    @test table_plot isa PhyloPicMakie.PhyloPicGlyphs
+    range_plot = augment_phylopic_ranges!(
+        ax,
+        table;
+        xstart = :start,
+        xstop = :stop,
+        y = :y,
+        taxon = :scientific_name,
+        build = 537,
+        request = resolved_request,
     )
+    @test range_plot isa PhyloPicMakie.PhyloPicGlyphs
 
     ambiguous_request = FakePhyloPicRequest(
         url -> _json_response(

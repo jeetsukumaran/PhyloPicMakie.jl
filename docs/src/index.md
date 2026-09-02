@@ -37,9 +37,9 @@ result.figure
 ```
 
 The `taxon` source searches PhyloPic directly; users do not need to discover a
-node UUID first. `augment_phylopic` creates a figure and axis and returns them as
-`(; figure, axis)`. Use `augment_phylopic!` to add silhouettes to an existing
-axis.
+node UUID first. `augment_phylopic` returns a `Makie.FigureAxisPlot` containing
+the new figure, axis, and `PhyloPicGlyphs` plot. Use `augment_phylopic!` to add
+silhouettes to an existing Makie parent and receive the plot handle directly.
 
 ## API sections
 

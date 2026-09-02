@@ -35,8 +35,8 @@ matching the first identifier for which a match exists.
 
 # Returns
 
-The matched PhyloPic node UUID as a `String`, or `nothing` if no match is
-found or any error occurs.
+    The matched PhyloPic node UUID as a `String`, or `nothing` if no match is
+    found (404). Operational and malformed-response errors are propagated.
 
 # Examples
 
@@ -57,12 +57,8 @@ function resolve_node(
     )::Union{String, Nothing}
     isempty(object_ids) && return nothing
 
-    try
-        b = ensure_build(build; request)
-        return _resolve_node_strict(authority, namespace, object_ids, b; request)
-    catch
-        return nothing
-    end
+    b = ensure_build(build; request)
+    return _resolve_node_strict(authority, namespace, object_ids, b; request)
 end
 
 function _resolve_node_strict(
@@ -89,7 +85,7 @@ function _resolve_node_strict(
         end
         error("_resolve_node_strict: response did not contain a node UUID or href.")
     catch err
-        err isa HTTP.Exceptions.StatusError && err.status == 404 && return nothing
+        _is_not_found_error(err) && return nothing
         rethrow(err)
     end
 end

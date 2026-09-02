@@ -90,6 +90,33 @@ struct ExternalTaxonNamespace
     namespace::String
 end
 
+function _validate_taxon_resolution(
+        status::TaxonResolutionStatus,
+        match_basis::Union{TaxonMatchBasis, Nothing},
+        node::Union{PhyloPicNode, Nothing},
+    )::Nothing
+    if status === TAXON_RESOLVED
+        isnothing(node) && throw(
+            ArgumentError("TaxonResolution: TAXON_RESOLVED requires a selected node.")
+        )
+        isnothing(match_basis) && throw(
+            ArgumentError("TaxonResolution: TAXON_RESOLVED requires a match basis.")
+        )
+    else
+        !isnothing(node) && throw(
+            ArgumentError(
+                "TaxonResolution: $status cannot contain a selected node."
+            )
+        )
+        !isnothing(match_basis) && throw(
+            ArgumentError(
+                "TaxonResolution: $status cannot contain a match basis."
+            )
+        )
+    end
+    return nothing
+end
+
 """
     TaxonResolution
 
@@ -116,6 +143,71 @@ struct TaxonResolution{R <: AbstractTaxonResolver}
     provider_taxon_rank::Union{String, Nothing}
     provider_match_type::Union{String, Nothing}
     provider_confidence::Union{Int, Nothing}
+
+    function TaxonResolution{R}(
+            query::String,
+            normalized_query::String,
+            resolver::R,
+            status::TaxonResolutionStatus,
+            match_basis::Union{TaxonMatchBasis, Nothing},
+            node::Union{PhyloPicNode, Nothing},
+            candidates::Vector{PhyloPicNode},
+            suggestions::Vector{String},
+            external_identifiers::Vector{ExternalTaxonIdentifier},
+            provider_taxon_name::Union{String, Nothing},
+            provider_taxon_rank::Union{String, Nothing},
+            provider_match_type::Union{String, Nothing},
+            provider_confidence::Union{Int, Nothing},
+        ) where {R <: AbstractTaxonResolver}
+        _validate_taxon_resolution(status, match_basis, node)
+        return new{R}(
+            query,
+            normalized_query,
+            resolver,
+            status,
+            match_basis,
+            node,
+            candidates,
+            suggestions,
+            external_identifiers,
+            provider_taxon_name,
+            provider_taxon_rank,
+            provider_match_type,
+            provider_confidence,
+        )
+    end
+end
+
+function TaxonResolution(
+        query::String,
+        normalized_query::String,
+        resolver::R,
+        status::TaxonResolutionStatus,
+        match_basis::Union{TaxonMatchBasis, Nothing},
+        node::Union{PhyloPicNode, Nothing},
+        candidates::Vector{PhyloPicNode},
+        suggestions::Vector{String},
+        external_identifiers::Vector{ExternalTaxonIdentifier},
+        provider_taxon_name::Union{String, Nothing},
+        provider_taxon_rank::Union{String, Nothing},
+        provider_match_type::Union{String, Nothing},
+        provider_confidence::Union{Int, Nothing},
+    )::TaxonResolution{R} where {R <: AbstractTaxonResolver}
+    return TaxonResolution{R}(
+        query,
+        normalized_query,
+        resolver,
+        status,
+        match_basis,
+        node,
+        candidates,
+        suggestions,
+        external_identifiers,
+        provider_taxon_name,
+        provider_taxon_rank,
+        provider_match_type,
+        provider_confidence,
+    )
 end
 
 """

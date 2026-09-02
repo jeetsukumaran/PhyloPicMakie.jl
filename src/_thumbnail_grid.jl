@@ -354,25 +354,20 @@ end
 
 Download and decode the image for `img` selected by `image_rendering`.
 
-Returns `nothing` when the URL for the selected rendering is `missing` or the
-download fails.  Download failures are logged via `@warn` with `label`
-included for diagnostics.
+Returns `nothing` when the URL for the selected rendering is `missing`.
+Operational download and decode failures are propagated.
 
 See [`_select_image_url`](@ref) for the full `image_rendering` symbol table.
 """
 function _download_image(
         img::PhyloPicDB.PhyloPicImage,
-        label::AbstractString;
+        _label::AbstractString;
         image_rendering::Symbol = :thumbnail,
+        loader = _load_phylopic_image,
     )::Union{Matrix{RGBA{N0f8}}, Nothing}
     url = _select_image_url(img, image_rendering)
     ismissing(url) && return nothing
-    try
-        return _load_phylopic_image(url)
-    catch err
-        @warn "phylopic_thumbnail_grid: could not load image for \"$label\"" exception = err
-        return nothing
-    end
+    return loader(url)
 end
 
 # ---------------------------------------------------------------------------

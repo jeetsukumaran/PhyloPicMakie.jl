@@ -29,8 +29,9 @@ PhyloPicMakie supports Julia 1.11 and later and Makie 0.24.
 
 ## Quick start
 
-Non-bang plotting functions create and return a new figure and axis. Bang
-functions add silhouettes to an existing axis.
+Non-bang augmentation functions return Makie's conventional figure-axis-plot
+container. Bang functions add silhouettes to a Makie parent and return the
+native recipe plot.
 
 ```julia
 using CairoMakie
@@ -44,11 +45,13 @@ result = augment_phylopic(
     axis = (; title = "PhyloPic silhouette"),
 )
 
-result.figure
+fig, ax, plot = result
+plot.visible[] = false
 ```
 
-The result is a named tuple. Access `result.figure` and `result.axis`, or use
-`fig, ax = result`.
+Access the same objects as `result.figure`, `result.axis`, and `result.plot`.
+The plot handle supports `Makie.update!`, visibility changes, nesting under
+another plot, and `delete!(ax, plot)` through Makie's normal lifecycle.
 
 The `taxon` source resolves scientific names directly through PhyloPic. Use
 the nested API namespace for inspectable REPL results, batch resolution,
@@ -69,9 +72,12 @@ end
 
 ## Public interfaces
 
-- `augment_phylopic` and `augment_phylopic_ranges` create a figure and axis.
+- `phylopicglyphs` and `phylopicglyphs!` are the discovery-free native Makie
+  recipe constructors for decoded images and positions.
+- `augment_phylopic` and `augment_phylopic_ranges` create a figure and axis and
+  return `Makie.FigureAxisPlot`.
 - `augment_phylopic!` and `augment_phylopic_ranges!` add images to an existing
-  axis.
+  Makie parent and return `PhyloPicGlyphs`.
 - `phylopic_thumbnail_grid` creates a silhouette gallery.
 - `phylopic_thumbnail_grid!` adds a gallery to an existing axis.
 - `PhyloPicMakie.PhyloPicDB` provides typed PhyloPic node and image records,
@@ -81,6 +87,16 @@ end
 See the [development documentation](https://jeetsukumaran.github.io/PhyloPicMakie.jl/dev/)
 for complete examples and API details. The repository also contains offline
 gallery scripts in [`examples/`](examples/README.md).
+
+## Migration from the pre-recipe API
+
+- Bang augmentation calls now return `PhyloPicGlyphs` instead of `nothing`.
+- Non-bang augmentation calls now return `Makie.FigureAxisPlot`; destructure
+  them as `fig, ax, plot`, not `fig, ax`.
+- Passing more than one of `taxon`, `node_uuid`, and `glyph` is an error.
+- A 404 or genuine missing image remains a semantic absence. Transport, HTTP,
+  malformed-response, download, and decode failures now throw.
+- Replace uses of private anchored-overlay helpers with `phylopicglyphs!`.
 
 ## Image licensing and attribution
 

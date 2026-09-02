@@ -105,11 +105,23 @@ a Makie scene. The `glyph` keyword accepts one preloaded image matrix, and
 Use "PhyloPic image" for API metadata and "glyph" for the decoded or rendered
 visual object.
 
+### Glyph recipe
+
+The glyph recipe is the native Makie recipe with plot type
+`PhyloPicGlyphs` and constructors `phylopicglyphs` and `phylopicglyphs!`. It
+accepts decoded image matrices and positions, performs no discovery or network
+I/O, owns its child plots, and participates in Makie's normal update,
+visibility, parentage, and deletion lifecycle.
+
+Use "glyph recipe" for the rendering primitive and "augmentation function"
+for a discovery or range convenience wrapper.
+
 ### Overlay
 
 An overlay is one or more silhouette glyphs added at explicit Makie
-coordinates. `augment_phylopic!` adds an overlay to an existing axis.
-`augment_phylopic` creates a new figure and axis before adding the overlay.
+coordinates. `augment_phylopic!` adds an overlay to a Makie parent and returns
+its `PhyloPicGlyphs` plot. `augment_phylopic` creates a new figure and axis
+before adding the overlay.
 
 ### Range overlay
 
@@ -141,15 +153,17 @@ select; several renderings can share one file format.
 
 A figure-creating function does not accept an existing axis. It creates a new
 `Makie.Figure` and `Makie.Axis`. `augment_phylopic` and
-`augment_phylopic_ranges` return `(; figure, axis)`.
+`augment_phylopic_ranges` return `Makie.FigureAxisPlot`, whose `figure`,
+`axis`, and `plot` fields contain the created objects.
 
-### Axis-mutating function
+### Parent-composing function
 
-An axis-mutating function accepts an existing `Makie.Axis` and adds content to
-it. These function names end in `!`.
+A parent-composing function accepts an existing Makie axis, scene, or plot and
+adds a recipe plot to it. These function names end in `!` and return the added
+plot.
 
-Do not describe an axis-mutating function as non-mutating merely because it
-returns `nothing`.
+Use "axis" only when a method specifically requires an axis. Use "parent" for
+the generic recipe-composition argument.
 
 ### Nested API namespace
 

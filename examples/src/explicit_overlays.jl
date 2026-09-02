@@ -1,13 +1,13 @@
 using CairoMakie: Axis, Figure, Point2f, display, hidedecorations!, hidespines!, lines!, save, scatter!, text!, xlims!, ylims!
 using ColorTypes: RGBA
 using FixedPointNumbers: N0f8
-using PhyloPicMakie: augment_phylopic!, augment_phylopic_ranges!
+using PhyloPicMakie: PhyloPicGlyphs, augment_phylopic_ranges!, phylopicglyphs!
 
 function silhouette_image(
         predicate;
         width::Integer = 240,
         height::Integer = 160,
-        color::RGBA{N0f8} = RGBA{N0f8}(0.08, 0.10, 0.12, 1.0),
+        color::RGBA{N0f8} = RGBA{N0f8}(0.08, 0.1, 0.12, 1.0),
     )::Matrix{RGBA{N0f8}}
     image = fill(
         RGBA{N0f8}(0.0, 0.0, 0.0, 0.0),
@@ -25,13 +25,13 @@ function silhouette_image(
 end
 
 function fish_glyph(;
-        color::RGBA{N0f8} = RGBA{N0f8}(0.10, 0.18, 0.32, 1.0),
+        color::RGBA{N0f8} = RGBA{N0f8}(0.1, 0.18, 0.32, 1.0),
     )::Matrix{RGBA{N0f8}}
     return silhouette_image(; width = 260, height = 150, color) do x, y
         body = ((x + 0.04) / 0.56)^2 + (y / 0.25)^2 <= 1.0
-        tail = x < -0.34 && abs(y) <= 0.70 * (x + 0.96)
+        tail = x < -0.34 && abs(y) <= 0.7 * (x + 0.96)
         dorsal = -0.06 <= x <= 0.18 && 0.08 <= y <= 0.34 - 0.55 * abs(x + 0.02)
-        ventral = -0.12 <= x <= 0.16 && -0.30 + 0.48 * abs(x + 0.02) <= y <= -0.04
+        ventral = -0.12 <= x <= 0.16 && -0.3 + 0.48 * abs(x + 0.02) <= y <= -0.04
         snout = 0.46 <= x <= 0.78 && abs(y) <= 0.18 * (0.78 - x) + 0.04
         return body || tail || dorsal || ventral || snout
     end
@@ -42,9 +42,9 @@ function bird_glyph(;
     )::Matrix{RGBA{N0f8}}
     return silhouette_image(; width = 240, height = 180, color) do x, y
         body = ((x + 0.02) / 0.44)^2 + ((y + 0.04) / 0.28)^2 <= 1.0
-        head = ((x - 0.30) / 0.13)^2 + ((y - 0.12) / 0.13)^2 <= 1.0
+        head = ((x - 0.3) / 0.13)^2 + ((y - 0.12) / 0.13)^2 <= 1.0
         beak = 0.42 <= x <= 0.72 && abs(y - 0.12) <= 0.18 * (0.72 - x) + 0.01
-        tail = x < -0.30 && abs(y + 0.02) <= 0.46 * (x + 0.92) + 0.03
+        tail = x < -0.3 && abs(y + 0.02) <= 0.46 * (x + 0.92) + 0.03
         wing = ((x + 0.04) / 0.28)^2 + ((y + 0.01) / 0.16)^2 <= 1.0 && y >= -0.02
         leg = abs(x - 0.01) <= 0.03 && -0.58 <= y <= -0.18
         return body || head || beak || tail || wing || leg
@@ -83,7 +83,7 @@ function configure_axis!(ax::Axis)::Nothing
     return nothing
 end
 
-function explicit_anchor_panel!(ax::Axis)::Nothing
+function explicit_anchor_panel!(ax::Axis)::PhyloPicGlyphs
     xs = Float64[0.8, 2.0, 3.2, 4.4]
     ys = Float64[1.2, 2.3, 1.8, 2.8]
     labels = ["Marine node", "Avian node", "Fern node", "Mirrored node"]
@@ -112,10 +112,9 @@ function explicit_anchor_panel!(ax::Axis)::Nothing
         fontsize = 16,
         color = :gray25,
     )
-    augment_phylopic!(
+    glyph_plot = phylopicglyphs!(
         ax,
-        xs,
-        ys,
+        Point2f.(xs, ys),
         images;
         glyph_size = 0.34,
         aspect = :preserve,
@@ -129,16 +128,16 @@ function explicit_anchor_panel!(ax::Axis)::Nothing
     xlims!(ax, 0.2, 5.0)
     ylims!(ax, 0.4, 3.6)
     ax.title = "Explicit data anchors"
-    return nothing
+    return glyph_plot
 end
 
-function range_anchor_panel!(ax::Axis)::Nothing
+function range_anchor_panel!(ax::Axis)::PhyloPicGlyphs
     xstart = Float64[0.6, 1.1, 1.7]
     xstop = Float64[3.2, 4.0, 4.8]
     ys = Float64[3.0, 2.0, 1.0]
     labels = ["Shelf interval", "Lagoon interval", "Floodplain interval"]
     images = Matrix{RGBA{N0f8}}[
-        mirrored_image(fish_glyph(; color = RGBA{N0f8}(0.12, 0.30, 0.37, 1.0))),
+        mirrored_image(fish_glyph(; color = RGBA{N0f8}(0.12, 0.3, 0.37, 1.0))),
         bird_glyph(; color = RGBA{N0f8}(0.47, 0.24, 0.16, 1.0)),
         fern_glyph(; color = RGBA{N0f8}(0.13, 0.31, 0.15, 1.0)),
     ]
@@ -170,7 +169,7 @@ function range_anchor_panel!(ax::Axis)::Nothing
         )
     end
 
-    augment_phylopic_ranges!(
+    glyph_plot = augment_phylopic_ranges!(
         ax,
         xstart,
         xstop,
@@ -181,7 +180,7 @@ function range_anchor_panel!(ax::Axis)::Nothing
         aspect = :preserve,
         placement = :bottom,
         xoffset = 0.0,
-        yoffset = 0.20,
+        yoffset = 0.2,
         rotation = 0.0,
         mirror = false,
         on_missing = :skip,
@@ -189,7 +188,7 @@ function range_anchor_panel!(ax::Axis)::Nothing
     xlims!(ax, 0.2, 6.6)
     ylims!(ax, 0.4, 3.8)
     ax.title = "Range midpoint anchors"
-    return nothing
+    return glyph_plot
 end
 
 fig = Figure(size = (1180, 560))
@@ -198,8 +197,8 @@ right_axis = Axis(fig[1, 2])
 
 configure_axis!(left_axis)
 configure_axis!(right_axis)
-explicit_anchor_panel!(left_axis)
-range_anchor_panel!(right_axis)
+left_glyphs = explicit_anchor_panel!(left_axis)
+right_glyphs = range_anchor_panel!(right_axis)
 
 if isempty(ARGS) && isinteractive()
     display(fig)
