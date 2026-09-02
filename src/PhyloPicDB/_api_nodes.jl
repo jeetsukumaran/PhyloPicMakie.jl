@@ -37,13 +37,28 @@ function fetch_node(
         build::Union{Int, Nothing} = nothing,
         request = phylopic_get,
     )::Union{PhyloPicNode, Nothing}
-    b = ensure_build(build; request)
-    url = "$PHYLOPIC_BASE_URL/nodes/$uuid?build=$b"
     try
-        resp = request(url)
-        return _parse_node_json(JSON3.read(resp.body), b)
+        b = ensure_build(build; request)
+        return _fetch_node_strict(uuid, b; request)
     catch
         return nothing
+    end
+end
+
+function _fetch_node_strict(
+        uuid::AbstractString,
+        build::Int;
+        request = phylopic_get,
+    )::Union{PhyloPicNode, Nothing}
+    url = "$PHYLOPIC_BASE_URL/nodes/$uuid?build=$build"
+    try
+        response = request(url)
+        node = _parse_node_json(JSON3.read(response.body), build)
+        isempty(node.uuid) && error("_fetch_node_strict: response did not contain a node UUID.")
+        return node
+    catch err
+        err isa HTTP.Exceptions.StatusError && err.status == 404 && return nothing
+        rethrow(err)
     end
 end
 

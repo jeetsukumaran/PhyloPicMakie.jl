@@ -65,46 +65,6 @@ function fetch_image(
     end
 end
 
-# ---------------------------------------------------------------------------
-# Internal: single-page fetch
-# ---------------------------------------------------------------------------
-
-# Fetch one page (zero-indexed) of the /images list for a node.
-# filter_param is "filter_clade" or "filter_node".
-# Returns a (possibly empty) Vector{PhyloPicImage} and the total page count,
-# or (empty, 0) on any error.
-function _fetch_images_page(
-        node_uuid::AbstractString,
-        build::Int,
-        page::Int,
-        filter_param::AbstractString;
-        request = phylopic_get,
-    )::Tuple{Vector{PhyloPicImage}, Int}
-    url = "$PHYLOPIC_BASE_URL/images?build=$build" *
-        "&$filter_param=$node_uuid&embed_items=true&page=$page"
-    try
-        resp = request(url)
-        obj = JSON3.read(resp.body)
-        n_pages = try
-            tp = obj.totalPages
-            tp isa Integer ? Int(tp) : 1
-        catch
-            1
-        end
-        items = try
-            obj._embedded.items
-        catch
-            return (PhyloPicImage[], n_pages)
-        end
-        images = [_parse_image_json(item, build) for item in items]
-        # Discard entries that failed to parse (empty uuid).
-        filter!(img -> !isempty(img.uuid), images)
-        return (images, n_pages)
-    catch
-        return (PhyloPicImage[], 0)
-    end
-end
-
 """
     fetch_images(
         node_uuid;
@@ -181,18 +141,21 @@ function fetch_images(
     b = ensure_build(build; request)
     filter_param = filter === :clade ? "filter_clade" : "filter_node"
 
-    # Fetch page 0 to learn totalPages.
-    first_page, n_pages = _fetch_images_page(node_uuid, b, 0, filter_param; request)
-    n_pages == 0 && return PhyloPicImage[]
-
-    limit = isnothing(max_pages) ? n_pages : min(n_pages, max_pages)
-
-    results = copy(first_page)
-    sizehint!(results, limit * _IMAGES_PER_PAGE)
-
-    for page in 1:(limit - 1)
-        page_imgs, _ = _fetch_images_page(node_uuid, b, page, filter_param; request)
-        append!(results, page_imgs)
+    first_url = "$PHYLOPIC_BASE_URL/images?build=$b" *
+        "&$filter_param=$node_uuid&embed_items=true&page=0"
+    results = try
+        _fetch_hal_pages(
+            PhyloPicImage,
+            first_url,
+            item -> begin
+                image = _parse_image_json(item, b)
+                isempty(image.uuid) ? nothing : image
+            end;
+            max_pages,
+            request,
+        )
+    catch
+        PhyloPicImage[]
     end
 
     # Enrich with node names after all pages are collected so that node

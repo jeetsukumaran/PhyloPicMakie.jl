@@ -26,9 +26,9 @@ using PhyloPicMakie
 
 const PhyloPicDB = PhyloPicMakie.PhyloPicDB
 
-uuid = PhyloPicDB.resolve_pbdb_node([133360, 133359, 39168, 37177])
-node = isnothing(uuid) ? nothing : PhyloPicDB.fetch_node(uuid)
-image = isnothing(uuid) ? nothing : PhyloPicDB.primary_image(uuid)
+resolution = PhyloPicDB.resolve_taxon("Ursus arctos")
+node = PhyloPicDB.require_node(resolution)
+image = PhyloPicDB.primary_image(resolution)
 ```
 
 Use an explicit build number when several requests must use one PhyloPic data
@@ -36,8 +36,66 @@ snapshot:
 
 ```julia
 build = PhyloPicDB.fetch_current_build()
-images = PhyloPicDB.clade_images(uuid; build, max_pages = 2)
+images = PhyloPicDB.clade_images(node; build, max_pages = 2)
 ```
+
+## Native name discovery
+
+`resolve_taxon` normalizes a scientific-name query and searches PhyloPic. It
+first uses an exact canonical preferred-name match, then an exact normalized
+preferred-name match, and finally a single unique alias candidate. It never
+selects the first ambiguous candidate.
+
+```julia
+resolution = PhyloPicDB.resolve_taxon("Ursus thibetanus")
+
+resolution.status
+resolution.match_basis
+resolution.node
+resolution.candidates
+resolution.suggestions
+```
+
+The compact REPL display shows the status and selected node. Use
+`search_nodes` to inspect all candidates and `autocomplete_nodes` for
+normalized suggestions. `resolve_taxa` preserves input order, deduplicates
+normalized queries, and pins one PhyloPic build for the batch.
+
+```julia
+resolutions = PhyloPicDB.resolve_taxa([
+    "Ailuropoda melanoleuca",
+    "Ursus arctos",
+    "Ursus arctos",
+])
+
+uuids = PhyloPicDB.node_uuid.(resolutions)
+```
+
+Semantic outcomes use `TAXON_RESOLVED`, `TAXON_AMBIGUOUS`, and
+`TAXON_NOT_FOUND`. Network and malformed-response failures throw instead of
+being represented as taxonomic misses.
+
+## External taxonomy providers
+
+Provider selection is explicit. `GBIFResolver` uses exact GBIF matches and
+passes the ordered GBIF lineage to PhyloPic. `PBDBResolver` obtains a PBDB
+`orig_no` lineage and passes it in most-specific-first order. PhyloPic remains
+the source of the selected node in both cases.
+
+```julia
+gbif_result = PhyloPicDB.resolve_taxon(
+    "Ursus arctos",
+    PhyloPicDB.GBIFResolver(kingdom = "Animalia"),
+)
+
+pbdb_result = PhyloPicDB.resolve_taxon(
+    "Ursus arctos",
+    PhyloPicDB.PBDBResolver(),
+)
+```
+
+The result preserves the ordered external identifiers and provider metadata.
+PhyloPicMakie does not run an automatic multi-provider cascade.
 
 ## Request injection
 
@@ -66,6 +124,15 @@ the applicable attribution and follow the terms attached to each image.
 ```@docs
 PhyloPicNode
 PhyloPicImage
+AbstractTaxonResolver
+PhyloPicResolver
+GBIFResolver
+PBDBResolver
+TaxonResolution
+TaxonResolutionStatus
+TaxonMatchBasis
+ExternalTaxonIdentifier
+ExternalTaxonNamespace
 PHYLOPIC_BASE_URL
 BUILD_TTL
 PHYLOPIC_IMAGE_RENDERINGS
@@ -81,6 +148,15 @@ fetch_current_build
 ensure_build
 fetch_node
 fetch_node_with_primary_image
+normalize_taxon_query
+autocomplete_nodes
+search_nodes
+fetch_external_namespaces
+resolve_taxon
+resolve_taxa
+isresolved
+require_node
+node_uuid
 resolve_node
 resolve_pbdb_node
 ```

@@ -15,7 +15,7 @@ and `Makie.Axis`. They return a named tuple `(; figure, axis)`:
 result = augment_phylopic(
     [1.0],
     [2.0];
-    node_uuid = ["3c4b8687-2401-4e5b-afb5-19aa3e7e8b26"],
+    taxon = ["Ursus arctos"],
     figure = (; size = (640, 480)),
     axis = (; title = "Silhouette overlay"),
 )
@@ -40,15 +40,43 @@ augment_phylopic!(
     ax,
     [1.0],
     [2.0];
-    node_uuid = ["3c4b8687-2401-4e5b-afb5-19aa3e7e8b26"],
+    taxon = ["Ursus arctos"],
 )
 ```
 
-All overlay functions also accept a preloaded image matrix through `glyph`.
-The low-level vector methods accept one pre-resolved image matrix per datum.
+Each overlay accepts exactly one image source:
 
-Resolve identifiers from external databases before calling these functions.
-PhyloPicMakie does not depend on a specific taxonomic database client.
+- `taxon` resolves one scientific-name query per datum;
+- `node_uuid` uses one already-known PhyloPic node UUID per datum;
+- `glyph` broadcasts one preloaded image matrix.
+
+The `taxon_resolver` keyword defaults to
+`PhyloPicDB.PhyloPicResolver()`. Pass `PhyloPicDB.GBIFResolver()` or
+`PhyloPicDB.PBDBResolver()` to request one explicit external taxonomy
+provider. `on_ambiguous = :error` prevents arbitrary selection; use `:skip`
+to treat ambiguous entries as unavailable. `on_missing` controls not-found
+taxa, missing primary images, and image-loading failures.
+
+Table methods accept a taxon-name column selector:
+
+```julia
+table = (x = [1.0], y = [2.0], scientific_name = ["Ursus arctos"])
+augment_phylopic!(
+    ax,
+    table;
+    x = :x,
+    y = :y,
+    taxon = :scientific_name,
+)
+```
+
+Thumbnail galleries accept UUID strings, `PhyloPicNode` values, or
+`TaxonResolution` values. This supports interactive candidate inspection:
+
+```julia
+candidates = PhyloPicDB.search_nodes("Ursus arctos")
+phylopic_thumbnail_grid(candidates)
+```
 
 ## Reference
 

@@ -22,16 +22,16 @@ PhyloPicMakie.PhyloPicDB       ← the PhyloPicDB data-access module
 
 | Function | Description |
 |---|---|
-| `augment_phylopic!(ax, xs, ys; node_uuid, ...)` | Add one glyph per datum at explicit `(x, y)` coordinates |
-| `augment_phylopic(xs, ys; node_uuid, ...)` | Create and return `(; figure, axis)` |
+| `augment_phylopic!(ax, xs, ys; taxon, ...)` | Discover and add one glyph per datum at explicit `(x, y)` coordinates |
+| `augment_phylopic(xs, ys; taxon, ...)` | Create and return `(; figure, axis)` |
 | `augment_phylopic!(ax, xs, ys, images; ...)` | Low-level: render pre-resolved image matrices |
-| `augment_phylopic_ranges!(ax, xstart, xstop, y; node_uuid, ...)` | Glyphs anchored to range endpoints |
-| `augment_phylopic_ranges(xstart, xstop, y; node_uuid, ...)` | Create and return `(; figure, axis)` |
-| `augment_phylopic!(ax, table; x, y, node_uuid, ...)` | Table-oriented variant |
-| `augment_phylopic_ranges!(ax, table; xstart, xstop, y, node_uuid, ...)` | Table range variant |
+| `augment_phylopic_ranges!(ax, xstart, xstop, y; taxon, ...)` | Glyphs anchored to range endpoints |
+| `augment_phylopic_ranges(xstart, xstop, y; taxon, ...)` | Create and return `(; figure, axis)` |
+| `augment_phylopic!(ax, table; x, y, taxon, ...)` | Table-oriented variant |
+| `augment_phylopic_ranges!(ax, table; xstart, xstop, y, taxon, ...)` | Table range variant |
 
-All vector-API variants also accept a pre-loaded `glyph::AbstractMatrix`
-instead of `node_uuid`.
+All vector-API variants accept exactly one of `taxon`, `node_uuid`, or a
+preloaded `glyph::AbstractMatrix`.
 
 ### Thumbnail gallery
 
@@ -43,6 +43,7 @@ instead of `node_uuid`.
 | `phylopic_thumbnail_grid(images, labels, group_sizes; ...)` | Low-level factory |
 
 Single-UUID and table-oriented variants are also available for all functions above.
+Thumbnail galleries also accept `PhyloPicNode` and `TaxonResolution` values.
 
 ## Internal helpers
 
@@ -53,6 +54,7 @@ covered by the public compatibility policy:
 |---|---|
 | `_load_phylopic_image(url)` | Download + decode + cache a PNG image |
 | `_resolve_images_by_uuid(uuids, glyph, n; ...)` | UUID vector → image matrix vector |
+| `_resolve_taxon_node_uuids(taxa, resolver, n; ...)` | Taxon queries → node UUID vector |
 | `_compute_image_bbox(x, y, w, h; ...)` | Data-space bounding box with scale correction |
 | `_augment_phylopic_anchored!(ax, anchors, images; ...)` | Render data-space or pixel-space anchors |
 | `_augment_resolved_phylopic_anchored!(parent, anchors, images; ...)` | Shared render-preparation path for pre-resolved images |

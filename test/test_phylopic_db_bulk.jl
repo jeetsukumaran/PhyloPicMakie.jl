@@ -34,7 +34,7 @@
     node3 = "batch-node-3-$suffix"
     images_request = FakePhyloPicRequest(
         url -> _json_response(
-            _image_page_payload([_image_payload("image-$node3")]; total_pages = 1)
+            _image_page_payload([_image_payload("image-$node3")])
         )
     )
     batch = PhyloPicDB.batch_images(

@@ -3,8 +3,7 @@
 #
 # Provides the public PhyloPic-native entry points for adding PhyloPic
 # silhouette glyphs to a Makie axis.  All functions are keyed on PhyloPic
-# node UUIDs (strings) or pre-loaded image matrices (glyph), with no
-# dependency on PaleobiologyDB or PBDB taxon names.
+# node UUIDs, taxon-name queries, or pre-loaded image matrices.
 #
 # Also contains `_extract_column`, the table-column extractor used by this
 # package's table-oriented entry points.
@@ -17,6 +16,7 @@
 #   augment_phylopic_ranges!                  (axis-mutating range vector API)
 #   augment_phylopic_ranges                   (figure/axis range vector factory)
 #   augment_phylopic_ranges! / augment_phylopic_ranges (range table APIs)
+#       ├─► _resolve_taxon_node_uuids(taxa, resolver, n; ...)
 #       └─► _resolve_images_by_uuid(node_uuids, glyph, n; image_rendering)
 #               └─► augment_phylopic!(ax, xs, ys, images; ...)  [_render_core.jl]
 #                       └─► _augment_phylopic_anchored!(...)   [_anchored_overlay.jl]
@@ -80,7 +80,10 @@ end
         x::AbstractVector{<:Real},
         y::AbstractVector{<:Real};
         node_uuid::Union{AbstractVector, Nothing} = nothing,
+        taxon::Union{AbstractVector, Nothing} = nothing,
         glyph::Union{AbstractMatrix, Nothing} = nothing,
+        taxon_resolver::PhyloPicDB.AbstractTaxonResolver = PhyloPicDB.PhyloPicResolver(),
+        build::Union{Int, Nothing} = nothing,
         placement::Symbol = :center,
         xoffset::Real = 0.0,
         yoffset::Real = 0.0,
@@ -90,14 +93,16 @@ end
         mirror::Bool = false,
         image_rendering::Symbol = :thumbnail,
         on_missing::Symbol = :skip,
+        on_ambiguous::Symbol = :error,
+        request = PhyloPicDB.phylopic_get,
+        taxonomy_request = nothing,
     ) -> Nothing
 
 Add one PhyloPic silhouette glyph per datum to an existing Makie axis `ax`,
 anchored at positions `(x[i], y[i])` in axis data coordinates.
 
-This is the **PhyloPic-native** public API: image sources are specified as
-PhyloPic node UUIDs (strings). Resolve identifiers from other databases before
-calling this function.
+This is the PhyloPic-native public API. It can discover nodes from taxon names,
+use already-known node UUIDs, or render a preloaded glyph.
 
 ## Arguments
 
@@ -107,8 +112,12 @@ calling this function.
 
 - `node_uuid`: per-datum PhyloPic node UUID strings.  `nothing` entries are
   handled according to `on_missing`.
+- `taxon`: per-datum scientific-name queries. The default `taxon_resolver`
+  searches PhyloPic directly. Pass an explicit `GBIFResolver` or
+  `PBDBResolver` to use that provider.
 - `glyph`: a single pre-loaded image matrix (e.g. from `FileIO.load`),
-  broadcast to every data point.  When provided, `node_uuid` is ignored.
+  broadcast to every data point.
+- `build`: optional PhyloPic build pinned across name and image requests.
 
 ### Placement
 
@@ -147,6 +156,8 @@ calling this function.
 - `on_missing`: how to handle data points for which no image is available.
   `:skip` (default) silently omits the glyph; `:error` throws;
   `:placeholder` draws a small gray placeholder glyph at the glyph position.
+- `on_ambiguous`: how to handle a taxon query with multiple candidates.
+  `:error` (default) throws; `:skip` treats the entry as unavailable.
 
 ## Returns
 
@@ -165,7 +176,7 @@ augment_phylopic!(
     ax,
     [1.0, 2.0],
     [1.0, 2.0];
-    node_uuid       = ["3c4b8687-2401-4e5b-afb5-19aa3e7e8b26", nothing],
+    taxon            = ["Ursus arctos", "Ursus maritimus"],
     glyph_size      = 0.4,
     placement       = :center,
     image_rendering = :thumbnail,
@@ -177,7 +188,10 @@ function augment_phylopic!(
         x::AbstractVector{<:Real},
         y::AbstractVector{<:Real};
         node_uuid::Union{AbstractVector, Nothing} = nothing,
+        taxon::Union{AbstractVector, Nothing} = nothing,
         glyph::Union{AbstractMatrix, Nothing} = nothing,
+        taxon_resolver::PhyloPicDB.AbstractTaxonResolver = PhyloPicDB.PhyloPicResolver(),
+        build::Union{Int, Nothing} = nothing,
         placement::Symbol = :center,
         xoffset::Real = 0.0,
         yoffset::Real = 0.0,
@@ -187,6 +201,9 @@ function augment_phylopic!(
         mirror::Bool = false,
         image_rendering::Symbol = :thumbnail,
         on_missing::Symbol = :skip,
+        on_ambiguous::Symbol = :error,
+        request = PhyloPicDB.phylopic_get,
+        taxonomy_request = nothing,
     )::Nothing
     n = length(x)
     length(y) == n || throw(
@@ -194,12 +211,52 @@ function augment_phylopic!(
             "augment_phylopic!: `x` and `y` must have the same length."
         )
     )
-    isnothing(node_uuid) && isnothing(glyph) && throw(
+    isnothing(node_uuid) && isnothing(taxon) && isnothing(glyph) && throw(
         ArgumentError(
-            "augment_phylopic!: one of `node_uuid` or `glyph` must be provided."
+            "augment_phylopic!: one of `node_uuid`, `taxon`, or `glyph` must be provided."
         )
     )
-    images = _resolve_images_by_uuid(node_uuid, glyph, n; image_rendering)
+    !isnothing(taxon) && (!isnothing(node_uuid) || !isnothing(glyph)) && throw(
+        ArgumentError(
+            "augment_phylopic!: `taxon` cannot be combined with `node_uuid` or `glyph`."
+        )
+    )
+    if !isnothing(node_uuid) && !isnothing(glyph)
+        Base.depwarn(
+            "passing both `node_uuid` and `glyph` is deprecated; `glyph` continues " *
+                "to take precedence. Pass exactly one image source.",
+            :augment_phylopic!,
+        )
+    end
+
+    images = if isnothing(taxon)
+        _resolve_images_by_uuid(
+            node_uuid,
+            glyph,
+            n;
+            image_rendering,
+            build,
+            request,
+        )
+    else
+        uuids, pinned_build = _resolve_taxon_node_uuids(
+            taxon,
+            taxon_resolver,
+            n;
+            build,
+            on_ambiguous,
+            request,
+            taxonomy_request,
+        )
+        _resolve_images_by_uuid(
+            uuids,
+            nothing,
+            n;
+            image_rendering,
+            build = pinned_build,
+            request,
+        )
+    end
     return augment_phylopic!(
         ax, x, y, images;
         glyph_size = glyph_size,
@@ -371,8 +428,8 @@ end
 
 Table-oriented variant of [`augment_phylopic!`](@ref).
 
-Extracts coordinate and node-UUID columns from any Tables.jl-compatible
-source (e.g. a `DataFrame`) and forwards to the vector API.
+Extracts coordinate and image-source columns from a table-like source and
+forwards to the vector API.
 
 ## Arguments
 
@@ -381,6 +438,8 @@ source (e.g. a `DataFrame`) and forwards to the vector API.
 - `y`: column selector for y coordinates.
 - `node_uuid`: column selector for PhyloPic node UUID strings, or `nothing`
   if `glyph` is used instead.
+- `taxon`: column selector for scientific-name queries, or `nothing` when
+  another source is used.
 - `glyph`: a single pre-loaded image matrix broadcast to all rows.
 - All remaining keyword arguments are forwarded to the vector
   [`augment_phylopic!`](@ref).
@@ -412,15 +471,17 @@ function augment_phylopic!(
         x,
         y,
         node_uuid = nothing,
+        taxon = nothing,
         glyph::Union{AbstractMatrix, Nothing} = nothing,
         kwargs...,
     )::Nothing
     xs = _extract_column(table, x)
     ys = _extract_column(table, y)
     uuids = isnothing(node_uuid) ? nothing : _extract_column(table, node_uuid)
+    taxa = isnothing(taxon) ? nothing : _extract_column(table, taxon)
     return augment_phylopic!(
         ax, xs::AbstractVector{<:Real}, ys::AbstractVector{<:Real};
-        node_uuid = uuids, glyph = glyph, kwargs...,
+        node_uuid = uuids, taxon = taxa, glyph = glyph, kwargs...,
     )
 end
 
@@ -440,18 +501,21 @@ function augment_phylopic(
         x,
         y,
         node_uuid = nothing,
+        taxon = nothing,
         glyph::Union{AbstractMatrix, Nothing} = nothing,
         kwargs...,
     )::_FigureAxisResult
     xs = _extract_column(table, x)
     ys = _extract_column(table, y)
     uuids = isnothing(node_uuid) ? nothing : _extract_column(table, node_uuid)
+    taxa = isnothing(taxon) ? nothing : _extract_column(table, taxon)
     return augment_phylopic(
         xs::AbstractVector{<:Real},
         ys::AbstractVector{<:Real};
         figure,
         axis,
         node_uuid = uuids,
+        taxon = taxa,
         glyph,
         kwargs...,
     )
@@ -476,8 +540,8 @@ end
 
 Table-oriented variant of [`augment_phylopic_ranges!`](@ref).
 
-Extracts range and node-UUID columns from a Tables.jl-compatible source
-and forwards to the vector range API.
+Extracts range and image-source columns from a table-like source and forwards
+to the vector range API.
 
 ## Arguments
 
@@ -486,6 +550,8 @@ and forwards to the vector range API.
 - `y`: column selector for the vertical coordinate.
 - `node_uuid`: column selector for PhyloPic node UUID strings, or `nothing`
   if `glyph` is used.
+- `taxon`: column selector for scientific-name queries, or `nothing` when
+  another source is used.
 - `glyph`: a single pre-loaded image matrix broadcast to all rows.
 - `at`: `:start` (default), `:stop`, or `:midpoint`.
 - All remaining keyword arguments are forwarded to the vector API.
@@ -527,6 +593,7 @@ function augment_phylopic_ranges!(
         xstop,
         y,
         node_uuid = nothing,
+        taxon = nothing,
         glyph::Union{AbstractMatrix, Nothing} = nothing,
         at::Symbol = :start,
         kwargs...,
@@ -535,12 +602,13 @@ function augment_phylopic_ranges!(
     xe = _extract_column(table, xstop)
     ys = _extract_column(table, y)
     uuids = isnothing(node_uuid) ? nothing : _extract_column(table, node_uuid)
+    taxa = isnothing(taxon) ? nothing : _extract_column(table, taxon)
     return augment_phylopic_ranges!(
         ax,
         xs::AbstractVector{<:Real},
         xe::AbstractVector{<:Real},
         ys::AbstractVector{<:Real};
-        node_uuid = uuids, glyph = glyph, at = at, kwargs...,
+        node_uuid = uuids, taxon = taxa, glyph = glyph, at = at, kwargs...,
     )
 end
 
@@ -561,6 +629,7 @@ function augment_phylopic_ranges(
         xstop,
         y,
         node_uuid = nothing,
+        taxon = nothing,
         glyph::Union{AbstractMatrix, Nothing} = nothing,
         at::Symbol = :start,
         kwargs...,
@@ -569,6 +638,7 @@ function augment_phylopic_ranges(
     xe = _extract_column(table, xstop)
     ys = _extract_column(table, y)
     uuids = isnothing(node_uuid) ? nothing : _extract_column(table, node_uuid)
+    taxa = isnothing(taxon) ? nothing : _extract_column(table, taxon)
     return augment_phylopic_ranges(
         xs::AbstractVector{<:Real},
         xe::AbstractVector{<:Real},
@@ -576,6 +646,7 @@ function augment_phylopic_ranges(
         figure,
         axis,
         node_uuid = uuids,
+        taxon = taxa,
         glyph,
         at,
         kwargs...,

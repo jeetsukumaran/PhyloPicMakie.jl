@@ -17,6 +17,7 @@ end
 function _node_payload(
         uuid::AbstractString = "node-1";
         name::AbstractString = "Canis lupus",
+        aliases::AbstractVector{<:AbstractString} = String[],
         parent_uuid::Union{AbstractString, Nothing} = "parent-1",
         primary_image_uuid::Union{AbstractString, Nothing} = "image-1",
     )::Dict{String, Any}
@@ -26,7 +27,10 @@ function _node_payload(
         Dict("href" => "/images/$primary_image_uuid?build=537")
     return Dict{String, Any}(
         "uuid" => String(uuid),
-        "names" => [[Dict("class" => "scientific", "text" => String(name))]],
+        "names" => [
+            [Dict("class" => "scientific", "text" => value)]
+                for value in String[String(name); String.(aliases)]
+        ],
         "_links" => Dict(
             "self" => Dict("href" => "/nodes/$uuid", "title" => String(name)),
             "parentNode" => parent_link,
@@ -85,10 +89,25 @@ end
 
 function _image_page_payload(
         images::AbstractVector;
-        total_pages::Integer = 1,
+        next_page::Union{Integer, Nothing} = nothing,
     )::Dict{String, Any}
+    next_link = isnothing(next_page) ? nothing :
+        Dict("href" => "/images?build=537&filter_clade=node-1&embed_items=true&page=$next_page")
     return Dict{String, Any}(
-        "totalPages" => Int(total_pages),
+        "_links" => Dict("next" => next_link),
         "_embedded" => Dict("items" => images),
+    )
+end
+
+function _node_page_payload(
+        nodes::AbstractVector;
+        next_page::Union{Integer, Nothing} = nothing,
+    )::Dict{String, Any}
+    next_link = isnothing(next_page) ? nothing : Dict(
+            "href" => "/nodes?build=537&filter_name=ursus%20arctos&embed_items=true&page=$next_page"
+        )
+    return Dict{String, Any}(
+        "_links" => Dict("next" => next_link),
+        "_embedded" => Dict("items" => nodes),
     )
 end

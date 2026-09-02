@@ -16,6 +16,8 @@ const VALID_NODE_IMAGE_FILTERS = (:primary, :clade, :node)
         node_uuid::AbstractString,
         image_filter::Symbol,
         image_max_pages::Union{Int, Nothing},
+        build::Union{Int, Nothing};
+        request = PhyloPicDB.phylopic_get,
     ) -> Vector{PhyloPicDB.PhyloPicImage}
 
 Fetch the image pool for a single PhyloPic node UUID, with `node_name`
@@ -34,17 +36,31 @@ function _fetch_node_image_pool(
         node_uuid::AbstractString,
         image_filter::Symbol,
         image_max_pages::Union{Int, Nothing},
+        build::Union{Int, Nothing};
+        request = PhyloPicDB.phylopic_get,
     )::Vector{PhyloPicDB.PhyloPicImage}
     isempty(strip(node_uuid)) && return PhyloPicDB.PhyloPicImage[]
     pool = if image_filter === :primary
-        img = PhyloPicDB.primary_image(node_uuid)
+        img = PhyloPicDB.primary_image(node_uuid; build, request)
         isnothing(img) ? PhyloPicDB.PhyloPicImage[] : [img]
     elseif image_filter === :clade
-        PhyloPicDB.clade_images(node_uuid; max_pages = image_max_pages, add_node_name = false)
+        PhyloPicDB.clade_images(
+            node_uuid;
+            build,
+            max_pages = image_max_pages,
+            add_node_name = false,
+            request,
+        )
     else  # :node
-        PhyloPicDB.node_images(node_uuid; max_pages = image_max_pages, add_node_name = false)
+        PhyloPicDB.node_images(
+            node_uuid;
+            build,
+            max_pages = image_max_pages,
+            add_node_name = false,
+            request,
+        )
     end
-    return PhyloPicDB.with_node_names(pool)
+    return PhyloPicDB.with_node_names(pool; build, request)
 end
 
 """
@@ -57,6 +73,8 @@ end
         image_label,
         labeljoin::AbstractString,
         image_rendering::Symbol,
+        build::Union{Int, Nothing};
+        request = PhyloPicDB.phylopic_get,
     ) -> Tuple{Vector{String}, Vector{Union{Matrix{RGBA{N0f8}}, Nothing}}, Vector{Int}}
 
 Build the flat cell list for the thumbnail grid from PhyloPic node UUIDs.
@@ -84,6 +102,8 @@ function _build_node_grid_cells(
         image_label,
         labeljoin::AbstractString,
         image_rendering::Symbol,
+        build::Union{Int, Nothing};
+        request = PhyloPicDB.phylopic_get,
     )::Tuple{
         Vector{String},
         Vector{Union{Matrix{RGBA{N0f8}}, Nothing}},
@@ -98,13 +118,22 @@ function _build_node_grid_cells(
     labels = String[]
     cell_images = Union{Matrix{RGBA{N0f8}}, Nothing}[]
     group_sizes = Int[]
+    pool_cache = Dict{String, Vector{PhyloPicDB.PhyloPicImage}}()
 
     for (uuid, name) in zip(node_uuids, node_labels)
         if isnothing(uuid) || isempty(strip(uuid))
             push!(group_sizes, 0)
             continue
         end
-        pool = _fetch_node_image_pool(uuid, image_filter, image_max_pages)
+        pool = get!(pool_cache, String(uuid)) do
+            _fetch_node_image_pool(
+                uuid,
+                image_filter,
+                image_max_pages,
+                build;
+                request,
+            )
+        end
         selected = _apply_image_selector(pool, image_selector)
         count = length(selected)
         push!(group_sizes, count)
@@ -137,14 +166,25 @@ produce an empty string.
 """
 function _resolve_node_labels(
         node_uuids::AbstractVector{<:Union{AbstractString, Nothing}},
+        build::Union{Int, Nothing};
+        request = PhyloPicDB.phylopic_get,
     )::Vector{String}
+    label_cache = Dict{String, String}()
+    for uuid in node_uuids
+        isnothing(uuid) && continue
+        value = String(strip(uuid))
+        isempty(value) && continue
+        get!(label_cache, value) do
+            node = PhyloPicDB.fetch_node(value; build, request)
+            isnothing(node) && return value
+            isempty(node.preferred_name) && return value
+            return node.preferred_name
+        end
+    end
     return map(node_uuids) do uuid
         isnothing(uuid) && return ""
-        s = strip(uuid)
-        isempty(s) && return ""
-        node = PhyloPicDB.fetch_node(String(s))
-        isnothing(node) && return String(s)
-        isempty(node.preferred_name) ? String(s) : node.preferred_name
+        value = String(strip(uuid))
+        return get(label_cache, value, "")
     end
 end
 
@@ -181,8 +221,8 @@ end
 Render a gallery of PhyloPic silhouettes into the existing Makie `Axis` `ax`,
 resolved from PhyloPic node UUIDs.
 
-This is the **PhyloPic-native** thumbnail gallery entry point. Resolve
-identifiers from external databases before calling it.
+This is the node-UUID thumbnail gallery entry point. Overloads also accept
+already-fetched `PhyloPicNode` or `TaxonResolution` values.
 
 ## Arguments
 
@@ -248,6 +288,8 @@ function phylopic_thumbnail_grid!(
         image_label = :BASICFIELDS,
         labeljoin::AbstractString = "\n",
         label_lines::Union{Int, Nothing} = nothing,
+        build::Union{Int, Nothing} = nothing,
+        request = PhyloPicDB.phylopic_get,
     )::Nothing
     image_filter ∈ VALID_NODE_IMAGE_FILTERS || throw(
         ArgumentError(
@@ -263,7 +305,7 @@ function phylopic_thumbnail_grid!(
     )
 
     labels = if isnothing(node_labels)
-        _resolve_node_labels(node_uuids)
+        _resolve_node_labels(node_uuids, build; request)
     else
         length(node_labels) == length(node_uuids) || throw(
             ArgumentError(
@@ -276,7 +318,8 @@ function phylopic_thumbnail_grid!(
 
     cell_labels, cell_images, group_sizes = _build_node_grid_cells(
         node_uuids, labels, image_filter, image_selector, image_max_pages,
-        image_label, labeljoin, image_rendering,
+        image_label, labeljoin, image_rendering, build;
+        request,
     )
     return phylopic_thumbnail_grid!(
         ax, cell_images, cell_labels, group_sizes;
@@ -314,6 +357,142 @@ function phylopic_thumbnail_grid!(
         kwargs...,
     )::Nothing
     return phylopic_thumbnail_grid!(ax, [node_uuid]; kwargs...)
+end
+
+function _typed_gallery_sources(
+        nodes::AbstractVector{<:PhyloPicDB.PhyloPicNode},
+        node_labels::Union{AbstractVector{<:AbstractString}, Nothing},
+        build::Union{Int, Nothing},
+    )::Tuple{Vector{Union{String, Nothing}}, Vector{String}, Union{Int, Nothing}}
+    labels = isnothing(node_labels) ? getproperty.(nodes, :preferred_name) :
+        collect(String, node_labels)
+    length(labels) == length(nodes) || throw(
+        ArgumentError("`node_labels` must have the same length as the node vector.")
+    )
+    builds = unique(getproperty.(nodes, :build))
+    isnothing(build) && length(builds) > 1 && throw(
+        ArgumentError("typed gallery nodes must come from one build or pass `build` explicitly.")
+    )
+    pinned_build = isnothing(build) && length(builds) == 1 ? only(builds) : build
+    uuids = Union{String, Nothing}[node.uuid for node in nodes]
+    return (uuids, labels, pinned_build)
+end
+
+function _typed_gallery_sources(
+        resolutions::AbstractVector{<:PhyloPicDB.TaxonResolution},
+        node_labels::Union{AbstractVector{<:AbstractString}, Nothing},
+        build::Union{Int, Nothing},
+        on_ambiguous::Symbol,
+    )::Tuple{Vector{Union{String, Nothing}}, Vector{String}, Union{Int, Nothing}}
+    on_ambiguous in (:error, :skip) || throw(
+        ArgumentError("`on_ambiguous` must be :error or :skip.")
+    )
+    if on_ambiguous === :error
+        ambiguous = findfirst(
+            resolution -> resolution.status === PhyloPicDB.TAXON_AMBIGUOUS,
+            resolutions,
+        )
+        isnothing(ambiguous) || throw(
+            ArgumentError(
+                "taxon query $(repr(resolutions[ambiguous].query)) is ambiguous."
+            )
+        )
+    end
+    labels = if isnothing(node_labels)
+        [
+            PhyloPicDB.isresolved(resolution) ?
+                (resolution.node::PhyloPicDB.PhyloPicNode).preferred_name :
+                resolution.query
+                for resolution in resolutions
+        ]
+    else
+        collect(String, node_labels)
+    end
+    length(labels) == length(resolutions) || throw(
+        ArgumentError("`node_labels` must have the same length as the resolution vector.")
+    )
+    uuids = Union{String, Nothing}[PhyloPicDB.node_uuid(result) for result in resolutions]
+    resolved_nodes = PhyloPicDB.PhyloPicNode[
+        resolution.node::PhyloPicDB.PhyloPicNode
+            for resolution in resolutions if PhyloPicDB.isresolved(resolution)
+    ]
+    builds = unique(getproperty.(resolved_nodes, :build))
+    isnothing(build) && length(builds) > 1 && throw(
+        ArgumentError(
+            "typed gallery resolutions must come from one build or pass `build` explicitly."
+        )
+    )
+    pinned_build = isnothing(build) && length(builds) == 1 ? only(builds) : build
+    return (uuids, labels, pinned_build)
+end
+
+"""
+    phylopic_thumbnail_grid!(ax, nodes::AbstractVector{PhyloPicNode}; ...)
+
+Render already-fetched PhyloPic nodes, using their preferred names as labels
+and their common build for image requests.
+"""
+function phylopic_thumbnail_grid!(
+        ax::Makie.Axis,
+        nodes::AbstractVector{<:PhyloPicDB.PhyloPicNode};
+        node_labels::Union{AbstractVector{<:AbstractString}, Nothing} = nothing,
+        build::Union{Int, Nothing} = nothing,
+        kwargs...,
+    )::Nothing
+    uuids, labels, pinned_build = _typed_gallery_sources(nodes, node_labels, build)
+    return phylopic_thumbnail_grid!(
+        ax,
+        uuids;
+        node_labels = labels,
+        build = pinned_build,
+        kwargs...,
+    )
+end
+
+"""
+    phylopic_thumbnail_grid!(ax, resolutions::AbstractVector{TaxonResolution}; ...)
+
+Render resolved taxon results. Ambiguous results throw by default; pass
+`on_ambiguous = :skip` to omit them. Not-found results contribute no cells.
+"""
+function phylopic_thumbnail_grid!(
+        ax::Makie.Axis,
+        resolutions::AbstractVector{<:PhyloPicDB.TaxonResolution};
+        node_labels::Union{AbstractVector{<:AbstractString}, Nothing} = nothing,
+        build::Union{Int, Nothing} = nothing,
+        on_ambiguous::Symbol = :error,
+        kwargs...,
+    )::Nothing
+    uuids, labels, pinned_build = _typed_gallery_sources(
+        resolutions,
+        node_labels,
+        build,
+        on_ambiguous,
+    )
+    return phylopic_thumbnail_grid!(
+        ax,
+        uuids;
+        node_labels = labels,
+        build = pinned_build,
+        kwargs...,
+    )
+end
+
+function phylopic_thumbnail_grid!(
+        ax::Makie.Axis,
+        node::PhyloPicDB.PhyloPicNode;
+        kwargs...,
+    )::Nothing
+    return phylopic_thumbnail_grid!(ax, [node]; kwargs...)
+end
+
+
+function phylopic_thumbnail_grid!(
+        ax::Makie.Axis,
+        resolution::PhyloPicDB.TaxonResolution;
+        kwargs...,
+    )::Nothing
+    return phylopic_thumbnail_grid!(ax, [resolution]; kwargs...)
 end
 
 # ---------------------------------------------------------------------------
@@ -463,6 +642,56 @@ function phylopic_thumbnail_grid(
     end
 
     return fig
+end
+
+function phylopic_thumbnail_grid(
+        nodes::AbstractVector{<:PhyloPicDB.PhyloPicNode};
+        node_labels::Union{AbstractVector{<:AbstractString}, Nothing} = nothing,
+        build::Union{Int, Nothing} = nothing,
+        kwargs...,
+    )::Makie.Figure
+    uuids, labels, pinned_build = _typed_gallery_sources(nodes, node_labels, build)
+    return phylopic_thumbnail_grid(
+        uuids;
+        node_labels = labels,
+        build = pinned_build,
+        kwargs...,
+    )
+end
+
+function phylopic_thumbnail_grid(
+        resolutions::AbstractVector{<:PhyloPicDB.TaxonResolution};
+        node_labels::Union{AbstractVector{<:AbstractString}, Nothing} = nothing,
+        build::Union{Int, Nothing} = nothing,
+        on_ambiguous::Symbol = :error,
+        kwargs...,
+    )::Makie.Figure
+    uuids, labels, pinned_build = _typed_gallery_sources(
+        resolutions,
+        node_labels,
+        build,
+        on_ambiguous,
+    )
+    return phylopic_thumbnail_grid(
+        uuids;
+        node_labels = labels,
+        build = pinned_build,
+        kwargs...,
+    )
+end
+
+function phylopic_thumbnail_grid(
+        node::PhyloPicDB.PhyloPicNode;
+        kwargs...,
+    )::Makie.Figure
+    return phylopic_thumbnail_grid([node]; kwargs...)
+end
+
+function phylopic_thumbnail_grid(
+        resolution::PhyloPicDB.TaxonResolution;
+        kwargs...,
+    )::Makie.Figure
+    return phylopic_thumbnail_grid([resolution]; kwargs...)
 end
 
 """

@@ -6,8 +6,8 @@ A Julia client for the [PhyloPic](https://www.phylopic.org/) API (v2).
 PhyloPic is an open database of freely reusable silhouette images of
 organisms, searchable by phylogeny.  This package provides typed structs
 ([`PhyloPicNode`](@ref), [`PhyloPicImage`](@ref)), low-level API wrappers,
-a high-level image-selection layer, and batch-fetch utilities with built-in
-deduplication and DataCaches-based caching.
+a high-level taxon-discovery and image-selection layer, and batch-fetch
+utilities with built-in deduplication and DataCaches-based caching.
 
 ## Quick start
 
@@ -16,26 +16,26 @@ using PhyloPicMakie
 
 const PhyloPicDB = PhyloPicMakie.PhyloPicDB
 
-# Resolve a PBDB lineage to a PhyloPic node UUID
-uuid = PhyloPicDB.resolve_pbdb_node([133360, 133359, 39168, 37177])
+# Resolve a scientific name directly through PhyloPic
+resolution = PhyloPicDB.resolve_taxon("Ursus arctos")
 
-# Fetch the node
-node = PhyloPicDB.fetch_node(uuid)
+# Require the selected node in programmatic code
+node = PhyloPicDB.require_node(resolution)
 println(node.preferred_name)
 
 # Get the primary image (one request)
-img = PhyloPicDB.primary_image(uuid)
+img = PhyloPicDB.primary_image(resolution)
 println(img.thumbnail_url)
 
 # Get all clade images (paginated)
-imgs = PhyloPicDB.clade_images(uuid; max_pages = 2)
+imgs = PhyloPicDB.clade_images(node; max_pages = 2)
 length(imgs)
 
 # Select the third image (or nothing if fewer than 3 exist)
 chosen = PhyloPicDB.select_image(imgs, 3)
 
 # Batch fetch for multiple nodes
-result = PhyloPicDB.batch_primary_images([uuid, uuid])  # deduplicates to 1 request
+result = PhyloPicDB.batch_primary_images([node.uuid, node.uuid])
 ```
 
 ## Build management
@@ -65,16 +65,36 @@ import JSON3
 import DataCaches: autocache
 
 include("_types.jl")
+include("_taxon_types.jl")
 include("_http.jl")
 include("_build.jl")
+include("_pagination.jl")
 include("_api_nodes.jl")
 include("_api_images.jl")
 include("_api_resolve.jl")
+include("_api_search.jl")
+include("_taxon_resolvers.jl")
 include("_image_selector.jl")
 include("_bulk.jl")
 
 export PhyloPicNode
 export PhyloPicImage
+export AbstractTaxonResolver
+export PhyloPicResolver
+export GBIFResolver
+export PBDBResolver
+export TaxonResolution
+export TaxonResolutionStatus
+export TaxonMatchBasis
+export ExternalTaxonIdentifier
+export ExternalTaxonNamespace
+
+export TAXON_RESOLVED
+export TAXON_AMBIGUOUS
+export TAXON_NOT_FOUND
+export PREFERRED_NAME_MATCH
+export UNIQUE_ALIAS_MATCH
+export EXTERNAL_IDENTIFIER_MATCH
 
 export PHYLOPIC_BASE_URL
 export BUILD_TTL
@@ -85,6 +105,16 @@ export ensure_build
 
 export fetch_node
 export fetch_node_with_primary_image
+export autocomplete_nodes
+export search_nodes
+export fetch_external_namespaces
+export normalize_taxon_query
+
+export resolve_taxon
+export resolve_taxa
+export isresolved
+export require_node
+export node_uuid
 
 export fetch_image
 export fetch_images

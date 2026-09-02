@@ -29,14 +29,15 @@ using PhyloPicMakie
 result = augment_phylopic(
     [1.0],
     [2.0];
-    node_uuid = ["3c4b8687-2401-4e5b-afb5-19aa3e7e8b26"],
+    taxon = ["Ursus arctos"],
     glyph_size = 0.4,
 )
 
 result.figure
 ```
 
-`augment_phylopic` creates a figure and axis and returns them as
+The `taxon` source searches PhyloPic directly; users do not need to discover a
+node UUID first. `augment_phylopic` creates a figure and axis and returns them as
 `(; figure, axis)`. Use `augment_phylopic!` to add silhouettes to an existing
 axis.
 

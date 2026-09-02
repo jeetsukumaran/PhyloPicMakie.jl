@@ -24,11 +24,11 @@
         url -> begin
             if occursin("page=0", url)
                 return _json_response(
-                    _image_page_payload([_image_payload("image-1")]; total_pages = 2)
+                    _image_page_payload([_image_payload("image-1")]; next_page = 1)
                 )
             elseif occursin("page=1", url)
                 return _json_response(
-                    _image_page_payload([_image_payload("image-2")]; total_pages = 2)
+                    _image_page_payload([_image_payload("image-2")])
                 )
             end
             error("unexpected URL: $url")
@@ -47,7 +47,7 @@
 
     limited_request = FakePhyloPicRequest(
         url -> _json_response(
-            _image_page_payload([_image_payload("image-1")]; total_pages = 3)
+            _image_page_payload([_image_payload("image-1")]; next_page = 1)
         )
     )
     limited = PhyloPicDB.fetch_images(

@@ -28,13 +28,50 @@
     primary = PhyloPicDB.primary_image("node-1"; build = 537, request = primary_request)
     @test primary isa PhyloPicDB.PhyloPicImage
 
+    node = PhyloPicDB._parse_node_json(
+        JSON3.read(JSON3.write(_node_payload())),
+        537,
+    )
+    node_primary_request = FakePhyloPicRequest(
+        url -> _json_response(_node_with_primary_payload())
+    )
+    @test PhyloPicDB.primary_image(node; request = node_primary_request) isa
+        PhyloPicDB.PhyloPicImage
+
+    resolution = PhyloPicDB._resolution(
+        "Canis lupus",
+        "canis lupus",
+        PhyloPicDB.PhyloPicResolver(),
+        PhyloPicDB.TAXON_RESOLVED;
+        match_basis = PhyloPicDB.PREFERRED_NAME_MATCH,
+        node,
+        candidates = [node],
+    )
+    resolution_primary_request = FakePhyloPicRequest(
+        url -> _json_response(_node_with_primary_payload())
+    )
+    @test PhyloPicDB.primary_image(
+        resolution;
+        request = resolution_primary_request,
+    ) isa PhyloPicDB.PhyloPicImage
+
     page_request = FakePhyloPicRequest(
         url -> _json_response(
-            _image_page_payload([_image_payload("image-1")]; total_pages = 1)
+            _image_page_payload([_image_payload("image-1")])
         )
     )
     @test length(PhyloPicDB.clade_images("node-1"; build = 537, request = page_request)) == 1
     @test occursin("filter_clade", page_request.calls[end])
     @test length(PhyloPicDB.node_images("node-1"; build = 537, request = page_request)) == 1
     @test occursin("filter_node", page_request.calls[end])
+
+    missing_resolution = PhyloPicDB._resolution(
+        "Missing taxon",
+        "missing taxon",
+        PhyloPicDB.PhyloPicResolver(),
+        PhyloPicDB.TAXON_NOT_FOUND,
+    )
+    @test isnothing(PhyloPicDB.primary_image(missing_resolution))
+    @test isempty(PhyloPicDB.clade_images(missing_resolution))
+    @test isempty(PhyloPicDB.node_images(missing_resolution))
 end

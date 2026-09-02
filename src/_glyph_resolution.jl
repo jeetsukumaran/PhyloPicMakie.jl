@@ -4,6 +4,8 @@
         glyph::Union{AbstractMatrix, Nothing},
         n::Integer;
         image_rendering::Symbol = :thumbnail,
+        build::Union{Int, Nothing} = nothing,
+        request = PhyloPicDB.phylopic_get,
     ) -> Vector{Union{Matrix{RGBA{N0f8}}, Nothing}}
 
 For each of the `n` data points, return either a decoded image matrix or
@@ -29,6 +31,8 @@ function _resolve_images_by_uuid(
         glyph::Union{AbstractMatrix, Nothing},
         n::Integer;
         image_rendering::Symbol = :thumbnail,
+        build::Union{Int, Nothing} = nothing,
+        request = PhyloPicDB.phylopic_get,
     )::Vector{Union{Matrix{RGBA{N0f8}}, Nothing}}
     if !isnothing(glyph)
         # Broadcast the single pre-loaded image to every data point.
@@ -55,7 +59,7 @@ function _resolve_images_by_uuid(
     )
     image_cache = Dict{String, Union{Matrix{RGBA{N0f8}}, Nothing}}()
     for uuid in unique_uuids
-        img = PhyloPicDB.primary_image(uuid)
+        img = PhyloPicDB.primary_image(uuid; build, request)
         if isnothing(img)
             image_cache[uuid] = nothing
         else
@@ -83,4 +87,76 @@ function _resolve_images_by_uuid(
         end
     end
     return results
+end
+
+"""
+    _resolve_taxon_node_uuids(
+        taxa,
+        resolver,
+        n;
+        build,
+        on_ambiguous,
+        request,
+        taxonomy_request,
+    ) -> Tuple{Vector{Union{String, Nothing}}, Int}
+
+Resolve taxon-name sources for rendering. The returned build is pinned across
+name resolution and subsequent image requests.
+"""
+function _resolve_taxon_node_uuids(
+        taxa::AbstractVector,
+        resolver::PhyloPicDB.AbstractTaxonResolver,
+        n::Integer;
+        build::Union{Int, Nothing} = nothing,
+        on_ambiguous::Symbol = :error,
+        request = PhyloPicDB.phylopic_get,
+        taxonomy_request = nothing,
+    )::Tuple{Vector{Union{String, Nothing}}, Int}
+    length(taxa) == n || throw(
+        ArgumentError(
+            "_resolve_taxon_node_uuids: `taxa` length ($(length(taxa))) must match " *
+                "coordinate length ($n)."
+        )
+    )
+    on_ambiguous in (:error, :skip) || throw(
+        ArgumentError(
+            "_resolve_taxon_node_uuids: `on_ambiguous` must be :error or :skip."
+        )
+    )
+    all(taxon -> taxon isa AbstractString, taxa) || throw(
+        ArgumentError("_resolve_taxon_node_uuids: every taxon query must be a string.")
+    )
+
+    b = PhyloPicDB.ensure_build(build; request)
+    queries = String[string(taxon) for taxon in taxa]
+    resolutions = if isnothing(taxonomy_request)
+        PhyloPicDB.resolve_taxa(queries, resolver; build = b, request)
+    else
+        PhyloPicDB.resolve_taxa(
+            queries,
+            resolver;
+            build = b,
+            request,
+            taxonomy_request,
+        )
+    end
+
+    uuids = Union{String, Nothing}[]
+    sizehint!(uuids, n)
+    for resolution in resolutions
+        if resolution.status === PhyloPicDB.TAXON_AMBIGUOUS && on_ambiguous === :error
+            candidate_names = join(
+                getproperty.(resolution.candidates, :preferred_name),
+                ", ",
+            )
+            isempty(candidate_names) && (candidate_names = "no direct PhyloPic candidates")
+            throw(
+                ArgumentError(
+                    "taxon query $(repr(resolution.query)) is ambiguous: $candidate_names"
+                )
+            )
+        end
+        push!(uuids, PhyloPicDB.node_uuid(resolution))
+    end
+    return (uuids, b)
 end

@@ -57,30 +57,40 @@ function resolve_node(
     )::Union{String, Nothing}
     isempty(object_ids) && return nothing
 
-    b = ensure_build(build; request)
+    try
+        b = ensure_build(build; request)
+        return _resolve_node_strict(authority, namespace, object_ids, b; request)
+    catch
+        return nothing
+    end
+end
+
+function _resolve_node_strict(
+        authority::AbstractString,
+        namespace::AbstractString,
+        object_ids::AbstractVector{<:AbstractString},
+        build::Int;
+        request = phylopic_get,
+    )::Union{String, Nothing}
+    isempty(object_ids) && return nothing
+
     ids_str = join(object_ids, ",")
     url = "$PHYLOPIC_BASE_URL/resolve/$authority/$namespace" *
-        "?build=$b&objectIDs=$ids_str"
-    try
-        resp = request(url)
-        obj = JSON3.read(resp.body)
+        "?build=$build&objectIDs=$ids_str"
+    return try
+        response = request(url)
+        obj = JSON3.read(response.body)
 
-        # HTTP.jl follows the 308 redirect to the /nodes/{uuid} endpoint.
-        # The final response body includes a top-level :uuid field.
         hasproperty(obj, :uuid) && return string(obj.uuid)
-
-        # If the redirect was not followed, the 308 body is:
-        # {"href": "/nodes/<uuid>?build=...", "title": "..."}
         if hasproperty(obj, :href)
             path = first(split(string(obj.href), '?'))
             uuid = last(split(path, '/'))
             isempty(uuid) || return uuid
         end
-
-        return nothing
+        error("_resolve_node_strict: response did not contain a node UUID or href.")
     catch err
         err isa HTTP.Exceptions.StatusError && err.status == 404 && return nothing
-        return nothing
+        rethrow(err)
     end
 end
 

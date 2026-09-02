@@ -237,6 +237,58 @@ function node_images(
 end
 
 # ---------------------------------------------------------------------------
+# Typed node and taxon-resolution conveniences
+# ---------------------------------------------------------------------------
+
+function primary_image(
+        node::PhyloPicNode;
+        build::Union{Int, Nothing} = node.build,
+        kwargs...,
+    )::Union{PhyloPicImage, Nothing}
+    return primary_image(node.uuid; build, kwargs...)
+end
+
+function primary_image(
+        resolution::TaxonResolution;
+        kwargs...,
+    )::Union{PhyloPicImage, Nothing}
+    isresolved(resolution) || return nothing
+    return primary_image(resolution.node::PhyloPicNode; kwargs...)
+end
+
+function clade_images(
+        node::PhyloPicNode;
+        build::Union{Int, Nothing} = node.build,
+        kwargs...,
+    )::Vector{PhyloPicImage}
+    return clade_images(node.uuid; build, kwargs...)
+end
+
+function clade_images(
+        resolution::TaxonResolution;
+        kwargs...,
+    )::Vector{PhyloPicImage}
+    isresolved(resolution) || return PhyloPicImage[]
+    return clade_images(resolution.node::PhyloPicNode; kwargs...)
+end
+
+function node_images(
+        node::PhyloPicNode;
+        build::Union{Int, Nothing} = node.build,
+        kwargs...,
+    )::Vector{PhyloPicImage}
+    return node_images(node.uuid; build, kwargs...)
+end
+
+function node_images(
+        resolution::TaxonResolution;
+        kwargs...,
+    )::Vector{PhyloPicImage}
+    isresolved(resolution) || return PhyloPicImage[]
+    return node_images(resolution.node::PhyloPicNode; kwargs...)
+end
+
+# ---------------------------------------------------------------------------
 # select_image — pure dispatch over selector types
 # ---------------------------------------------------------------------------
 

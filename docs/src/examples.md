@@ -28,6 +28,7 @@ Run these commands from the repository root:
 - `julia --project=examples examples/src/figure_factories.jl`
 - `julia --project=examples examples/src/thumbnail_gallery.jl`
 - `julia --project=examples examples/src/graph_anchors.jl`
+- `julia --project=examples examples/src/taxon_discovery.jl`
 
 In an interactive Julia session each script displays the figure. When run as a
 script, each example saves a PNG in the current working directory by default.
@@ -40,9 +41,11 @@ Pass a custom path as the first argument if you want the output somewhere else.
   example materializes `graphplot`, snapshots `p[:node_pos][]`, and forwards
   those explicit coordinates into `augment_phylopic!`; it is not presented as a
   live reactive overlay example.
+- `taxon_discovery.jl`: a live, built-in taxon-name resolution example that
+  prints typed results and renders bear silhouettes without pre-discovered
+  node UUIDs.
 
 ## Live fetch scope
 
-The required gallery intentionally omits a live `node_uuid` fetch example.
-Live UUID-driven experimentation can still be done interactively through the
-documented public APIs when network access is desired.
+The first four scripts remain offline. `taxon_discovery.jl` is an optional
+live example and requires access to the PhyloPic service.

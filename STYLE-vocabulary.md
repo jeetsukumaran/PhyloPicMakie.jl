@@ -55,6 +55,42 @@ URLs, node associations, license data, and attribution data.
 Use "image UUID" for the image record identifier. Do not call an image UUID a
 node UUID.
 
+### Taxon query
+
+A taxon query is the scientific-name string supplied for discovery. The
+`taxon` rendering keyword accepts one taxon query per datum. The normalized
+form is stored in `TaxonResolution.normalized_query`.
+
+Do not call a taxon query a node name until resolution selects a PhyloPic
+node.
+
+### Taxon resolver
+
+A taxon resolver is an explicit strategy represented by an
+`AbstractTaxonResolver` subtype. `PhyloPicResolver` searches PhyloPic directly;
+`GBIFResolver` and `PBDBResolver` obtain external identifiers before asking
+PhyloPic to resolve them.
+
+Do not use "resolver" for an individual result.
+
+### Taxon resolution
+
+A taxon resolution is a `TaxonResolution` value produced for one taxon query.
+Its status is resolved, ambiguous, or not found. Operational failures are
+errors, not taxon resolution statuses.
+
+### Candidate
+
+A candidate is a PhyloPic node returned by direct name search before the
+selection rule chooses a node. Never describe the first candidate as the
+match unless the selection rule establishes it.
+
+### External taxon identifier
+
+An external taxon identifier is an authority, namespace, and object-ID tuple
+used by PhyloPic's external identifier resolver. `ExternalTaxonIdentifier`
+preserves this provenance in provider-backed taxon resolutions.
+
 ### Silhouette
 
 A silhouette is the organism image represented by a PhyloPic image record.

@@ -36,12 +36,10 @@ functions add silhouettes to an existing axis.
 using CairoMakie
 using PhyloPicMakie
 
-node_uuid = "3c4b8687-2401-4e5b-afb5-19aa3e7e8b26"
-
 result = augment_phylopic(
     [1.0],
     [2.0];
-    node_uuid = [node_uuid],
+    taxon = ["Ursus arctos"],
     glyph_size = 0.4,
     axis = (; title = "PhyloPic silhouette"),
 )
@@ -52,14 +50,16 @@ result.figure
 The result is a named tuple. Access `result.figure` and `result.axis`, or use
 `fig, ax = result`.
 
-Use the nested API namespace to resolve identifiers or inspect image metadata:
+The `taxon` source resolves scientific names directly through PhyloPic. Use
+the nested API namespace for inspectable REPL results, batch resolution,
+external taxonomy providers, or image metadata:
 
 ```julia
 using PhyloPicMakie
 
 const PhyloPicDB = PhyloPicMakie.PhyloPicDB
-node_uuid = "3c4b8687-2401-4e5b-afb5-19aa3e7e8b26"
-image = PhyloPicDB.primary_image(node_uuid)
+resolution = PhyloPicDB.resolve_taxon("Ursus arctos")
+image = PhyloPicDB.primary_image(resolution)
 
 if !isnothing(image)
     println(image.license)
@@ -75,7 +75,8 @@ end
 - `phylopic_thumbnail_grid` creates a silhouette gallery.
 - `phylopic_thumbnail_grid!` adds a gallery to an existing axis.
 - `PhyloPicMakie.PhyloPicDB` provides typed PhyloPic node and image records,
-  identifier resolution, pagination, image selection, and batch requests.
+  native name search, explicit GBIF and PBDB resolvers, identifier resolution,
+  pagination, image selection, and batch requests.
 
 See the [development documentation](https://jeetsukumaran.github.io/PhyloPicMakie.jl/dev/)
 for complete examples and API details. The repository also contains offline
