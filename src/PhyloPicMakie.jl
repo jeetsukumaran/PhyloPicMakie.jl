@@ -5,10 +5,9 @@ Standalone Makie + FileIO package providing image-loading, rendering, and
 PhyloPic-native visualization utilities for
 [PhyloPic](https://www.phylopic.org/) silhouette images.
 
-`PhyloPicMakie.PhyloPicDB` exposes the underlying
-[PhyloPicDB](https://github.com/jeetsukumaran/PhyloPicDB.jl) data/API module,
-giving the caller a single `using PhyloPicMakie` entry point that covers both
-the visualization layer and the underlying PhyloPic API client.
+`PhyloPicMakie.PhyloPicDB` is the supported nested namespace for the package's
+typed PhyloPic v2 API client. Its public exports follow the same compatibility
+policy as the top-level rendering API.
 
 ## Namespace hierarchy
 
@@ -24,10 +23,10 @@ PhyloPicMakie.PhyloPicDB       ← the PhyloPicDB data-access module
 | Function | Description |
 |---|---|
 | `augment_phylopic!(ax, xs, ys; node_uuid, ...)` | Add one glyph per datum at explicit `(x, y)` coordinates |
-| `augment_phylopic(ax, xs, ys; node_uuid, ...)` | Non-bang alias |
+| `augment_phylopic(xs, ys; node_uuid, ...)` | Create and return `(; figure, axis)` |
 | `augment_phylopic!(ax, xs, ys, images; ...)` | Low-level: render pre-resolved image matrices |
 | `augment_phylopic_ranges!(ax, xstart, xstop, y; node_uuid, ...)` | Glyphs anchored to range endpoints |
-| `augment_phylopic_ranges(ax, xstart, xstop, y; node_uuid, ...)` | Non-bang alias |
+| `augment_phylopic_ranges(xstart, xstop, y; node_uuid, ...)` | Create and return `(; figure, axis)` |
 | `augment_phylopic!(ax, table; x, y, node_uuid, ...)` | Table-oriented variant |
 | `augment_phylopic_ranges!(ax, table; xstart, xstop, y, node_uuid, ...)` | Table range variant |
 
@@ -47,16 +46,15 @@ Single-UUID and table-oriented variants are also available for all functions abo
 
 ## Internal helpers
 
-The following symbols are `_`-prefixed and intended for use by packages that
-integrate with PhyloPicMakie (e.g. `PaleobiologyDB.PhyloPicPBDB`,
-`TaxonTreeMakie`):
+The following `_`-prefixed symbols are implementation details. They are not
+covered by the public compatibility policy:
 
 | Symbol | Description |
 |---|---|
 | `_load_phylopic_image(url)` | Download + decode + cache a PNG image |
 | `_resolve_images_by_uuid(uuids, glyph, n; ...)` | UUID vector → image matrix vector |
 | `_compute_image_bbox(x, y, w, h; ...)` | Data-space bounding box with scale correction |
-| `_augment_phylopic_anchored!(ax, anchors, images; ...)` | Shared anchored-overlay substrate for data/pixel anchors |
+| `_augment_phylopic_anchored!(ax, anchors, images; ...)` | Render data-space or pixel-space anchors |
 | `_augment_resolved_phylopic_anchored!(parent, anchors, images; ...)` | Shared render-preparation path for pre-resolved images |
 | `_axis_scale_correction_obs(scene)` | Reactive `(ypx/unit) / (xpx/unit)` correction |
 | `_apply_rotation(img, deg)` | Rotate image matrix by multiples of 90° |

@@ -1,8 +1,8 @@
 # Example gallery
 
 This directory contains a standalone `PhyloPicMakie.jl` gallery environment.
-It stays isolated from `PaleobiologyDB.jl` and focuses on the package's public
-Makie overlay surface.
+The required examples use pre-resolved image matrices and focus on the
+package's public Makie interfaces.
 
 ## Setup
 
@@ -22,6 +22,7 @@ untracked.
 Run any example from the repository root:
 
 - `julia --project=examples examples/src/explicit_overlays.jl`
+- `julia --project=examples examples/src/figure_factories.jl`
 - `julia --project=examples examples/src/thumbnail_gallery.jl`
 - `julia --project=examples examples/src/graph_anchors.jl`
 
@@ -31,6 +32,7 @@ working directory by default. Pass a custom path as the first argument if you
 want the output somewhere else.
 
 - `explicit_overlays.jl`: public explicit-coordinate and range-anchor overlays.
+- `figure_factories.jl`: figure-creating coordinate and range overlay methods.
 - `thumbnail_gallery.jl`: public thumbnail-grid rendering with grouped labels.
 - `graph_anchors.jl`: a `GraphMakie` node-position snapshot hand-off that
   materializes `graphplot`, snapshots `p[:node_pos][]`, and forwards those

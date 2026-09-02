@@ -22,6 +22,7 @@
     with_node_names(
         images::AbstractVector{PhyloPicImage};
         build::Union{Int, Nothing} = nothing,
+        request = phylopic_get,
     ) -> Vector{PhyloPicImage}
 
 Return a copy of `images` with `node_name` populated for every image that has
@@ -38,6 +39,7 @@ This function makes network requests and is therefore not pure.
 - `images`: vector of [`PhyloPicImage`](@ref) values to enrich.
 - `build`: PhyloPic build index.  `nothing` (default) fetches the current
   build automatically.
+- `request`: callable that accepts a URL and returns an `HTTP.Response`.
 
 # Returns
 
@@ -55,14 +57,15 @@ enriched[1].node_name   # → "Tyrannosaurus" (or nothing if node unreachable)
 function with_node_names(
         images::AbstractVector{PhyloPicImage};
         build::Union{Int, Nothing} = nothing,
+        request = phylopic_get,
     )::Vector{PhyloPicImage}
-    b = ensure_build(build)
+    b = ensure_build(build; request)
     uuid_to_name = Dict{String, String}()
     for img in images
         isnothing(img.specific_node_uuid) && continue
         uuid = img.specific_node_uuid::String
         haskey(uuid_to_name, uuid) && continue
-        node = fetch_node(uuid; build = b)
+        node = fetch_node(uuid; build = b, request)
         isnothing(node) || (uuid_to_name[uuid] = node.preferred_name)
     end
     return [
@@ -79,6 +82,7 @@ end
         node_uuid;
         build = nothing,
         add_node_name::Bool = false,
+        request = phylopic_get,
     ) -> Union{PhyloPicImage, Nothing}
 
 Return the designated primary image for a PhyloPic node, fetching both the
@@ -94,6 +98,7 @@ requires exactly one HTTP round trip (plus one additional round trip when
 - `build`: PhyloPic build index.  `nothing` fetches the current build.
 - `add_node_name`: if `true`, fetch the node at `specific_node_uuid` and
   populate `img.node_name` with its `preferred_name`.  Default `false`.
+- `request`: callable that accepts a URL and returns an `HTTP.Response`.
 
 # Returns
 
@@ -114,11 +119,12 @@ function primary_image(
         node_uuid::AbstractString;
         build::Union{Int, Nothing} = nothing,
         add_node_name::Bool = false,
+        request = phylopic_get,
     )::Union{PhyloPicImage, Nothing}
-    _, img = fetch_node_with_primary_image(node_uuid; build = build)
+    _, img = fetch_node_with_primary_image(node_uuid; build, request)
     isnothing(img) && return nothing
     add_node_name || return img
-    enriched = with_node_names([img]; build = build)
+    enriched = with_node_names([img]; build, request)
     return enriched[1]
 end
 
@@ -128,6 +134,7 @@ end
         build = nothing,
         max_pages = nothing,
         add_node_name::Bool = false,
+        request = phylopic_get,
     ) -> Vector{PhyloPicImage}
 
 Return all images illustrating the node or any of its descendants, paging
@@ -145,6 +152,7 @@ stable across calls.
 - `max_pages`: if provided, fetch at most this many pages (~30 images each).
 - `add_node_name`: if `true`, populate `node_name` on each returned image
   via deduplicated [`fetch_node`](@ref) calls.  Default `false`.
+- `request`: callable that accepts a URL and returns an `HTTP.Response`.
 
 # Returns
 
@@ -165,13 +173,15 @@ function clade_images(
         build::Union{Int, Nothing} = nothing,
         max_pages::Union{Int, Nothing} = nothing,
         add_node_name::Bool = false,
+        request = phylopic_get,
     )::Vector{PhyloPicImage}
     return fetch_images(
         node_uuid;
-        build = build,
+        build,
         filter = :clade,
-        max_pages = max_pages,
-        add_node_name = add_node_name,
+        max_pages,
+        add_node_name,
+        request,
     )
 end
 
@@ -181,6 +191,7 @@ end
         build = nothing,
         max_pages = nothing,
         add_node_name::Bool = false,
+        request = phylopic_get,
     ) -> Vector{PhyloPicImage}
 
 Return only images tagged directly to this node (not descendants).
@@ -195,6 +206,7 @@ fewer than [`clade_images`](@ref).
 - `max_pages`: if provided, fetch at most this many pages.
 - `add_node_name`: if `true`, populate `node_name` on each returned image
   via deduplicated [`fetch_node`](@ref) calls.  Default `false`.
+- `request`: callable that accepts a URL and returns an `HTTP.Response`.
 
 # Returns
 
@@ -212,13 +224,15 @@ function node_images(
         build::Union{Int, Nothing} = nothing,
         max_pages::Union{Int, Nothing} = nothing,
         add_node_name::Bool = false,
+        request = phylopic_get,
     )::Vector{PhyloPicImage}
     return fetch_images(
         node_uuid;
-        build = build,
+        build,
         filter = :node,
-        max_pages = max_pages,
-        add_node_name = add_node_name,
+        max_pages,
+        add_node_name,
+        request,
     )
 end
 

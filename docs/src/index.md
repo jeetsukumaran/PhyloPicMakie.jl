@@ -4,30 +4,57 @@ CurrentModule = PhyloPicMakie
 
 # PhyloPicMakie
 
-Documentation for [PhyloPicMakie](https://github.com/jeetsukumaran/PhyloPicMakie.jl).
+`PhyloPicMakie` adds [PhyloPic](https://www.phylopic.org/) silhouettes to Makie
+figures. It supports explicit coordinate overlays, range-relative overlays,
+thumbnail galleries, and typed access to the PhyloPic v2 API.
 
-`PhyloPicMakie` provides Julia tools for working with [PhyloPic](https://www.phylopic.org/) silhouette images in Makie plots.
+```@docs
+PhyloPicMakie
+PhyloPicDB
+```
 
-The package owns a generic anchored-overlay foundation for PhyloPic glyphs.
-Public explicit-coordinate helpers use that same substrate internally, and
-packages with rendered-object or projected-anchor workflows can build on the
-same owner layer without reimplementing Makie projection logic.
+## Installation
 
-## Example gallery
+```julia
+import Pkg
+Pkg.add("PhyloPicMakie")
+```
 
-The repository ships a standalone `examples` environment that demonstrates the
-public overlay interface without any `PaleobiologyDB.jl` dependency. See the
-[Examples](examples.md) page for setup, manual run commands, output behavior,
-and the `graph_anchors.jl` node-position snapshot hand-off note.
+## Quick start
 
-## Packages
+```julia
+using CairoMakie
+using PhyloPicMakie
 
-| Module | Description |
-|--------|-------------|
-| [`PhyloPicMakie`](api/rendering.md) | Makie rendering primitives: overlay pre-resolved silhouettes on axes |
-| [`PhyloPicMakie.PhyloPicDB`](api/phylopic_db.md) | PhyloPic HTTP API client: resolve taxa, fetch images and metadata |
+result = augment_phylopic(
+    [1.0],
+    [2.0];
+    node_uuid = ["3c4b8687-2401-4e5b-afb5-19aa3e7e8b26"],
+    glyph_size = 0.4,
+)
 
-## Quick Index
+result.figure
+```
+
+`augment_phylopic` creates a figure and axis and returns them as
+`(; figure, axis)`. Use `augment_phylopic!` to add silhouettes to an existing
+axis.
+
+## API sections
+
+| Section | Description |
+|:--|:--|
+| [Rendering API](api/rendering.md) | Overlay and thumbnail-gallery functions for Makie |
+| [PhyloPicDB](api/phylopic_db.md) | Supported nested namespace for PhyloPic nodes, images, resolution, and batch requests |
+| [Examples](examples.md) | Offline gallery scripts and live-fetch guidance |
+
+## Image licensing
+
+PhyloPic images can use different licenses. Inspect the `license`,
+`license_url`, `attribution`, and `contributor_href` fields on each
+`PhyloPicDB.PhyloPicImage` before publishing or redistributing it.
+
+## Index
 
 ```@index
 ```

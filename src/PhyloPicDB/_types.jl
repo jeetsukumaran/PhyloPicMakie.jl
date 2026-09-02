@@ -468,18 +468,16 @@ end
 """
     PHYLOPIC_IMAGE_RENDERINGS
 
-Valid `image_rendering` symbols understood by the PhyloPicMakie and
-TaxonTreeMakie visualization layers.  Each symbol selects a different URL
-field from a [`PhyloPicImage`](@ref) (or the corresponding field in the
-NamedTuple returned by `acquire_phylopic`).
+Valid `image_rendering` symbols understood by PhyloPicMakie. Each symbol
+selects a different URL field from a [`PhyloPicImage`](@ref).
 
-| Symbol | `PhyloPicImage` field | `acquire_phylopic` field | Format |
-|---|---|---|---|
-| `:thumbnail`   | `thumbnail_url`   | `:phylopic_thumbnail`   | PNG; square thumbnail, largest available (default) |
-| `:raster`      | `raster_url`      | `:phylopic_raster`      | PNG; full-resolution, largest available |
-| `:og_image`    | `og_image_url`    | `:phylopic_og_image`    | PNG; Open Graph social-media preview |
-| `:vector`      | `vector_url`      | `:phylopic_vector`      | SVG; auto-generated black silhouette on transparent background — requires an SVG-capable `FileIO` plugin |
-| `:source_file` | `source_file_url` | `:phylopic_source_file` | SVG or raster — format matches the original upload; may require an SVG-capable `FileIO` plugin |
+| Symbol | `PhyloPicImage` field | Format |
+|---|---|---|
+| `:thumbnail`   | `thumbnail_url`   | PNG; square thumbnail, largest available (default) |
+| `:raster`      | `raster_url`      | PNG; full-resolution, largest available |
+| `:og_image`    | `og_image_url`    | PNG; Open Graph social-media preview |
+| `:vector`      | `vector_url`      | SVG; auto-generated black silhouette on transparent background — requires an SVG-capable `FileIO` plugin |
+| `:source_file` | `source_file_url` | SVG or raster — format matches the original upload; may require an SVG-capable `FileIO` plugin |
 
 See also [`PhyloPicImage`](@ref).
 """

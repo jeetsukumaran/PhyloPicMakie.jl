@@ -11,9 +11,6 @@ HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 JSON3 = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"
 Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 
-[sources]
-DataCaches = {url = "https://github.com/JuliaData/DataCaches.jl.git"}
-
 [compat]
 Aqua = "0.8"
 DataCaches = "0.4"

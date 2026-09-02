@@ -12,28 +12,30 @@ deduplication and DataCaches-based caching.
 ## Quick start
 
 ```julia
-using PhyloPicDB
+using PhyloPicMakie
+
+const PhyloPicDB = PhyloPicMakie.PhyloPicDB
 
 # Resolve a PBDB lineage to a PhyloPic node UUID
-uuid = resolve_pbdb_node([133360, 133359, 39168, 37177])
+uuid = PhyloPicDB.resolve_pbdb_node([133360, 133359, 39168, 37177])
 
 # Fetch the node
-node = fetch_node(uuid)
+node = PhyloPicDB.fetch_node(uuid)
 println(node.preferred_name)
 
 # Get the primary image (one request)
-img = primary_image(uuid)
+img = PhyloPicDB.primary_image(uuid)
 println(img.thumbnail_url)
 
 # Get all clade images (paginated)
-imgs = clade_images(uuid; max_pages = 2)
+imgs = PhyloPicDB.clade_images(uuid; max_pages = 2)
 length(imgs)
 
 # Select the third image (or nothing if fewer than 3 exist)
-chosen = select_image(imgs, 3)
+chosen = PhyloPicDB.select_image(imgs, 3)
 
 # Batch fetch for multiple nodes
-result = batch_primary_images([uuid, uuid])  # deduplicates to 1 request
+result = PhyloPicDB.batch_primary_images([uuid, uuid])  # deduplicates to 1 request
 ```
 
 ## Build management
@@ -44,9 +46,9 @@ explicit `Int` to pin the build and avoid redundant network requests when
 making many calls in a tight loop:
 
 ```julia
-b    = fetch_current_build()
-node = fetch_node(uuid; build = b)
-imgs = clade_images(uuid; build = b)
+b = PhyloPicDB.fetch_current_build()
+node = PhyloPicDB.fetch_node(uuid; build = b)
+imgs = PhyloPicDB.clade_images(uuid; build = b)
 ```
 
 ## Image ordering stability
@@ -58,8 +60,8 @@ does not change).
 """
 module PhyloPicDB
 
-using HTTP
-using JSON3
+import HTTP
+import JSON3
 import DataCaches: autocache
 
 include("_types.jl")
@@ -76,6 +78,7 @@ export PhyloPicImage
 
 export PHYLOPIC_BASE_URL
 export BUILD_TTL
+export phylopic_get
 
 export fetch_current_build
 export ensure_build

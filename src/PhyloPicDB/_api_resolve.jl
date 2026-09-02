@@ -7,7 +7,13 @@
 # ---------------------------------------------------------------------------
 
 """
-    resolve_node(authority, namespace, object_ids; build = nothing)
+    resolve_node(
+        authority,
+        namespace,
+        object_ids;
+        build = nothing,
+        request = phylopic_get,
+    )
         -> Union{String, Nothing}
 
 Resolve a list of external identifiers to the closest matching PhyloPic node
@@ -25,6 +31,7 @@ matching the first identifier for which a match exists.
 - `object_ids`: ordered vector of identifier strings to try.  The first
   element has the highest priority.
 - `build`: PhyloPic build index.  `nothing` fetches the current build.
+- `request`: callable that accepts a URL and returns an `HTTP.Response`.
 
 # Returns
 
@@ -46,15 +53,16 @@ function resolve_node(
         namespace::AbstractString,
         object_ids::AbstractVector{<:AbstractString};
         build::Union{Int, Nothing} = nothing,
+        request = phylopic_get,
     )::Union{String, Nothing}
     isempty(object_ids) && return nothing
 
-    b = ensure_build(build)
+    b = ensure_build(build; request)
     ids_str = join(object_ids, ",")
     url = "$PHYLOPIC_BASE_URL/resolve/$authority/$namespace" *
         "?build=$b&objectIDs=$ids_str"
     try
-        resp = phylopic_get(url)
+        resp = request(url)
         obj = JSON3.read(resp.body)
 
         # HTTP.jl follows the 308 redirect to the /nodes/{uuid} endpoint.
@@ -77,7 +85,8 @@ function resolve_node(
 end
 
 """
-    resolve_pbdb_node(pbdb_ids; build = nothing) -> Union{String, Nothing}
+    resolve_pbdb_node(pbdb_ids; build = nothing, request = phylopic_get)
+        -> Union{String, Nothing}
 
 Convenience wrapper for [`resolve_node`](@ref) using the Paleobiology Database
 (`paleobiodb.org / txn`) as the authority.
@@ -91,6 +100,7 @@ PhyloPic `/resolve` endpoint.
 - `pbdb_ids`: ordered vector of PBDB `orig_no` integer values, most-specific
   first.
 - `build`: PhyloPic build index.  `nothing` fetches the current build.
+- `request`: callable that accepts a URL and returns an `HTTP.Response`.
 
 # Returns
 
@@ -107,12 +117,14 @@ uuid = resolve_pbdb_node([133360, 133359, 39168, 37177])
 function resolve_pbdb_node(
         pbdb_ids::AbstractVector{<:Integer};
         build::Union{Int, Nothing} = nothing,
+        request = phylopic_get,
     )::Union{String, Nothing}
     isempty(pbdb_ids) && return nothing
     return resolve_node(
         "paleobiodb.org",
         "txn",
         string.(pbdb_ids);
-        build = build,
+        build,
+        request,
     )
 end

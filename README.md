@@ -1,39 +1,103 @@
 # PhyloPicMakie
 
-[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://jeetsukumaran.github.io/PhyloPicMakie.jl/stable/)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://jeetsukumaran.github.io/PhyloPicMakie.jl/dev/)
 [![Build Status](https://github.com/jeetsukumaran/PhyloPicMakie.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/jeetsukumaran/PhyloPicMakie.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Aqua](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 
-`PhyloPicMakie` provides Makie-native rendering utilities for pre-resolved
-PhyloPic silhouette images. Public explicit-coordinate overlay calls now route
-through a shared internal anchored-overlay substrate, so both data-space and
-projected pixel-space anchor workflows keep aspect, placement, and resize
-behavior inside `PhyloPicMakie` instead of reimplementing Makie-space
-projection mechanics in client packages.
+`PhyloPicMakie` adds [PhyloPic](https://www.phylopic.org/) silhouettes to
+[Makie](https://docs.makie.org/stable/) figures. It provides coordinate and
+range overlays, thumbnail galleries, image loading, and a supported nested
+client for the PhyloPic v2 API at `PhyloPicMakie.PhyloPicDB`.
 
-## Example gallery
+## Installation
 
-A standalone examples environment lives in `examples/`, and version control
-intentionally keeps only `examples/Project.toml` as the examples environment
-file. On a clean checkout, run
-`julia --project=examples -e 'import Pkg; Pkg.instantiate()'` to resolve a
-fresh local `examples/Manifest.toml` from the current project constraints; that
-local manifest stays ignored and untracked.
+After the package is registered in Julia General, install it with:
 
-Run `julia --project=examples examples/src/explicit_overlays.jl`,
-`julia --project=examples examples/src/thumbnail_gallery.jl`, or
-`julia --project=examples examples/src/graph_anchors.jl` from the repository
-root to run the gallery directly. In an interactive session each script
-displays its figure. When run as a script, each example saves a PNG in the
-current working directory by default, and the first argument can override that
-output path.
+```julia
+import Pkg
+Pkg.add("PhyloPicMakie")
+```
 
-The `graph_anchors.jl` example is a `GraphMakie` node-position snapshot
-hand-off: it materializes `graphplot`, snapshots `p[:node_pos][]`, and routes
-those explicit coordinates into the public `augment_phylopic!` surface. It is
-not a live reactive overlay example.
+To use the current development version before registration:
 
-The gallery intentionally omits a required live UUID-fetch example. Ad hoc
-live UUID experiments can still be done interactively against the public
-overlay and thumbnail-grid APIs when network access is desired.
+```julia
+import Pkg
+Pkg.add(url = "https://github.com/jeetsukumaran/PhyloPicMakie.jl")
+```
+
+PhyloPicMakie supports Julia 1.11 and later and Makie 0.24.
+
+## Quick start
+
+Non-bang plotting functions create and return a new figure and axis. Bang
+functions add silhouettes to an existing axis.
+
+```julia
+using CairoMakie
+using PhyloPicMakie
+
+node_uuid = "3c4b8687-2401-4e5b-afb5-19aa3e7e8b26"
+
+result = augment_phylopic(
+    [1.0],
+    [2.0];
+    node_uuid = [node_uuid],
+    glyph_size = 0.4,
+    axis = (; title = "PhyloPic silhouette"),
+)
+
+result.figure
+```
+
+The result is a named tuple. Access `result.figure` and `result.axis`, or use
+`fig, ax = result`.
+
+Use the nested API namespace to resolve identifiers or inspect image metadata:
+
+```julia
+using PhyloPicMakie
+
+const PhyloPicDB = PhyloPicMakie.PhyloPicDB
+node_uuid = "3c4b8687-2401-4e5b-afb5-19aa3e7e8b26"
+image = PhyloPicDB.primary_image(node_uuid)
+
+if !isnothing(image)
+    println(image.license)
+    println(image.attribution)
+end
+```
+
+## Public interfaces
+
+- `augment_phylopic` and `augment_phylopic_ranges` create a figure and axis.
+- `augment_phylopic!` and `augment_phylopic_ranges!` add images to an existing
+  axis.
+- `phylopic_thumbnail_grid` creates a silhouette gallery.
+- `phylopic_thumbnail_grid!` adds a gallery to an existing axis.
+- `PhyloPicMakie.PhyloPicDB` provides typed PhyloPic node and image records,
+  identifier resolution, pagination, image selection, and batch requests.
+
+See the [development documentation](https://jeetsukumaran.github.io/PhyloPicMakie.jl/dev/)
+for complete examples and API details. The repository also contains offline
+gallery scripts in [`examples/`](examples/README.md).
+
+## Image licensing and attribution
+
+The package license does not determine the license of an individual PhyloPic
+image. Each `PhyloPicImage` can carry its own `license`, `license_url`,
+`attribution`, and `contributor_href`. Inspect and retain those fields when
+publishing or redistributing a silhouette. Follow the terms attached to the
+specific image.
+
+## Relationship to Phylopic
+
+The registered [`Phylopic`](https://github.com/PoisotLab/SpeciesDistributionToolkit.jl)
+component of `SpeciesDistributionToolkit.jl` retrieves silhouettes for species
+distribution workflows. `PhyloPicMakie` focuses on Makie-native placement and
+gallery rendering and includes a typed client for the PhyloPic v2 API.
+
+## Development disclosure
+
+Generative AI tools have contributed to source code, tests, and documentation
+in this repository. The package maintainer remains responsible for reviewing,
+understanding, and validating all released code.

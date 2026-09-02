@@ -181,8 +181,8 @@ end
 Render a gallery of PhyloPic silhouettes into the existing Makie `Axis` `ax`,
 resolved from PhyloPic node UUIDs.
 
-This is the **PhyloPic-native** thumbnail gallery entry point.  For PBDB
-taxon-name resolution use `PaleobiologyDB.PhyloPicPBDB.phylopic_thumbnail_grid!`.
+This is the **PhyloPic-native** thumbnail gallery entry point. Resolve
+identifiers from external databases before calling it.
 
 ## Arguments
 
@@ -195,10 +195,10 @@ taxon-name resolution use `PaleobiologyDB.PhyloPicPBDB.phylopic_thumbnail_grid!`
 - `node_labels`: Display names used as the `taxon_name` context when
   building cell labels (one per UUID entry).  When `nothing` (default), the
   node's `preferred_name` is fetched via the API — pass explicit labels to
-  avoid this round-trip (e.g. PBDB taxon names from PhyloPicPBDB).
+  avoid this round trip.
 
 For all other keywords (layout, image selection, label building, rendering)
-see `PaleobiologyDB.PhyloPicPBDB.phylopic_thumbnail_grid!`.
+see [`phylopic_thumbnail_grid!`](@ref).
 
 ## Image filter defaults
 

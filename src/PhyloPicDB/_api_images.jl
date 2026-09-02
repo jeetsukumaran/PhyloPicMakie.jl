@@ -14,6 +14,7 @@ const _IMAGES_PER_PAGE = 30
         uuid;
         build = nothing,
         add_node_name::Bool = false,
+        request = phylopic_get,
     ) -> Union{PhyloPicImage, Nothing}
 
 Fetch a single [`PhyloPicImage`](@ref) by its UUID from the PhyloPic API.
@@ -25,6 +26,7 @@ Fetch a single [`PhyloPicImage`](@ref) by its UUID from the PhyloPic API.
 - `add_node_name`: if `true` and the image has a `specific_node_uuid`, fetch
   the corresponding node and populate `img.node_name` with its
   `preferred_name`.  Requires one additional HTTP round trip.  Default `false`.
+- `request`: callable that accepts a URL and returns an `HTTP.Response`.
 
 # Returns
 
@@ -45,15 +47,16 @@ function fetch_image(
         uuid::AbstractString;
         build::Union{Int, Nothing} = nothing,
         add_node_name::Bool = false,
+        request = phylopic_get,
     )::Union{PhyloPicImage, Nothing}
-    b = ensure_build(build)
+    b = ensure_build(build; request)
     url = "$PHYLOPIC_BASE_URL/images/$uuid?build=$b"
     try
-        resp = phylopic_get(url)
+        resp = request(url)
         img = _parse_image_json(JSON3.read(resp.body), b)
         isempty(img.uuid) && return nothing
         if add_node_name && !isnothing(img.specific_node_uuid)
-            node = fetch_node(img.specific_node_uuid; build = b)
+            node = fetch_node(img.specific_node_uuid; build = b, request)
             isnothing(node) || (img = _with_node_name(img, node.preferred_name))
         end
         return img
@@ -74,12 +77,13 @@ function _fetch_images_page(
         node_uuid::AbstractString,
         build::Int,
         page::Int,
-        filter_param::AbstractString,
+        filter_param::AbstractString;
+        request = phylopic_get,
     )::Tuple{Vector{PhyloPicImage}, Int}
     url = "$PHYLOPIC_BASE_URL/images?build=$build" *
         "&$filter_param=$node_uuid&embed_items=true&page=$page"
     try
-        resp = phylopic_get(url)
+        resp = request(url)
         obj = JSON3.read(resp.body)
         n_pages = try
             tp = obj.totalPages
@@ -108,6 +112,7 @@ end
         filter = :clade,
         max_pages = nothing,
         add_node_name::Bool = false,
+        request = phylopic_get,
     ) -> Vector{PhyloPicImage}
 
 Return all [`PhyloPicImage`](@ref)s associated with a PhyloPic node,
@@ -127,6 +132,7 @@ paging through the `/images` list endpoint.
 - `add_node_name`: if `true`, populate `node_name` on each returned image via
   deduplicated [`fetch_node`](@ref) calls (one call per unique
   `specific_node_uuid`).  Default `false`.
+- `request`: callable that accepts a URL and returns an `HTTP.Response`.
 
 # Returns
 
@@ -158,6 +164,7 @@ function fetch_images(
         filter::Symbol = :clade,
         max_pages::Union{Int, Nothing} = nothing,
         add_node_name::Bool = false,
+        request = phylopic_get,
     )::Vector{PhyloPicImage}
     filter in (:clade, :node) ||
         throw(
@@ -165,12 +172,17 @@ function fetch_images(
             "fetch_images: `filter` must be :clade or :node, got :$filter"
         )
     )
+    (!isnothing(max_pages) && max_pages < 1) && throw(
+        ArgumentError(
+            "fetch_images: `max_pages` must be positive or `nothing`, got $max_pages"
+        )
+    )
 
-    b = ensure_build(build)
+    b = ensure_build(build; request)
     filter_param = filter === :clade ? "filter_clade" : "filter_node"
 
     # Fetch page 0 to learn totalPages.
-    first_page, n_pages = _fetch_images_page(node_uuid, b, 0, filter_param)
+    first_page, n_pages = _fetch_images_page(node_uuid, b, 0, filter_param; request)
     n_pages == 0 && return PhyloPicImage[]
 
     limit = isnothing(max_pages) ? n_pages : min(n_pages, max_pages)
@@ -179,13 +191,13 @@ function fetch_images(
     sizehint!(results, limit * _IMAGES_PER_PAGE)
 
     for page in 1:(limit - 1)
-        page_imgs, _ = _fetch_images_page(node_uuid, b, page, filter_param)
+        page_imgs, _ = _fetch_images_page(node_uuid, b, page, filter_param; request)
         append!(results, page_imgs)
     end
 
     # Enrich with node names after all pages are collected so that node
     # fetches are deduplicated across the full result set.
-    add_node_name && (results = with_node_names(results; build = b))
+    add_node_name && (results = with_node_names(results; build = b, request))
 
     return results
 end

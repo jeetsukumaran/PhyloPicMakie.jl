@@ -4,9 +4,9 @@
 # Provides the generic augment_phylopic! and augment_phylopic_ranges! entry
 # points that render pre-resolved image matrices onto a Makie axis.
 #
-# Name resolution (taxon → URL → image matrix) lives in
-# PaleobiologyDB.PhyloPicPBDB, which calls this function after
-# resolving images so that no PaleobiologyDB dependency is required here.
+# Taxon-name resolution belongs outside this package. Integrations can call
+# this function after resolving image matrices without adding their data-source
+# dependencies to PhyloPicMakie.
 #
 # The visible glyphs now render through the shared anchored-overlay substrate
 # in `_anchored_overlay.jl`.  Explicit data-coordinate wrappers still enter
@@ -15,13 +15,31 @@
 #
 # Public:
 #   augment_phylopic!(ax, xs, ys, images; ...)  → Nothing
+#   augment_phylopic(xs, ys, images; ...)       → (; figure, axis)
 #   augment_phylopic_ranges!(ax, xstarts, xstops, ys, images; ...) → Nothing
+#   augment_phylopic_ranges(xstarts, xstops, ys, images; ...)      → (; figure, axis)
 #
 # Internal:
 #   _augment_resolved_phylopic_anchored!(parent, anchors, images; ...) → overlay/nothing
 # ---------------------------------------------------------------------------
 
 import Makie
+
+const _FigureAxisResult = NamedTuple{
+    (:figure, :axis),
+    Tuple{Makie.Figure, Makie.Axis},
+}
+
+const _FigureOrAxisSettings = Union{NamedTuple, AbstractDict{Symbol}}
+
+function _new_figure_axis(
+        figure::Union{NamedTuple, AbstractDict{Symbol}},
+        axis::Union{NamedTuple, AbstractDict{Symbol}},
+    )::_FigureAxisResult
+    fig = Makie.Figure(; figure...)
+    ax = Makie.Axis(fig[1, 1]; axis...)
+    return (; figure = fig, axis = ax)
+end
 
 """
     augment_phylopic!(
@@ -45,9 +63,8 @@ image matrices.
 `images` is a `Vector{Union{Matrix{RGBA{N0f8}}, Nothing}}` — `nothing`
 entries are handled according to `on_missing`.
 
-This is the generic rendering entry point.  Callers are responsible for
-supplying pre-resolved images.  For PBDB taxon-name resolution, use
-`PaleobiologyDB.PhyloPicPBDB.augment_phylopic!` instead.
+This is the generic rendering entry point. Callers are responsible for
+supplying pre-resolved images.
 
 For `aspect = :preserve`, rendered glyphs maintain their correct pixel-space
 aspect ratio on anisotropic axes and stay reactive under relimit and resize
@@ -61,6 +78,66 @@ function _placeholder_glyph()::Matrix{RGBA{N0f8}}
     glyph[:, 1] .= RGBA{N0f8}(0.5, 0.5, 0.5, 1.0)
     glyph[:, end] .= RGBA{N0f8}(0.5, 0.5, 0.5, 1.0)
     return glyph
+end
+
+"""
+    augment_phylopic(
+        xs::AbstractVector{<:Real},
+        ys::AbstractVector{<:Real},
+        images::AbstractVector;
+        figure = (;),
+        axis = (;),
+        kwargs...,
+    ) -> NamedTuple{(:figure, :axis)}
+
+Create a new `Makie.Figure` and `Makie.Axis`, render pre-resolved PhyloPic
+image matrices at `(xs[i], ys[i])`, and return `(; figure, axis)`.
+
+The `figure` and `axis` keyword arguments accept named tuples or symbol-keyed
+dictionaries whose entries are forwarded to the corresponding Makie
+constructors. The result supports field access and destructuring:
+
+```julia
+result = augment_phylopic(xs, ys, images; glyph_size = 0.4)
+result.figure
+result.axis
+
+fig, ax = augment_phylopic(xs, ys, images; glyph_size = 0.4)
+```
+
+See [`augment_phylopic!`](@ref) for rendering keyword documentation.
+"""
+function augment_phylopic(
+        xs::AbstractVector{<:Real},
+        ys::AbstractVector{<:Real},
+        images::AbstractVector;
+        figure::_FigureOrAxisSettings = (;),
+        axis::_FigureOrAxisSettings = (;),
+        glyph_size::Real = 0.4,
+        aspect::Symbol = :preserve,
+        placement::Symbol = :center,
+        xoffset::Real = 0.0,
+        yoffset::Real = 0.0,
+        rotation::Real = 0.0,
+        mirror::Bool = false,
+        on_missing::Symbol = :skip,
+    )::_FigureAxisResult
+    result = _new_figure_axis(figure, axis)
+    augment_phylopic!(
+        result.axis,
+        xs,
+        ys,
+        images;
+        glyph_size,
+        aspect,
+        placement,
+        xoffset,
+        yoffset,
+        rotation,
+        mirror,
+        on_missing,
+    )
+    return result
 end
 
 function _prepared_anchor_positions(anchor_positions, kept_indices::AbstractVector{<:Integer})
@@ -236,4 +313,58 @@ function augment_phylopic_ranges!(
     xs = [_range_anchor(Float64(xstart[i]), Float64(xstop[i]), at) for i in 1:n]
     augment_phylopic!(ax, xs, y, images; kwargs...)
     return nothing
+end
+
+"""
+    augment_phylopic_ranges(
+        xstart::AbstractVector{<:Real},
+        xstop::AbstractVector{<:Real},
+        y::AbstractVector{<:Real},
+        images::AbstractVector;
+        figure = (;),
+        axis = (;),
+        at::Symbol = :midpoint,
+        kwargs...,
+    ) -> NamedTuple{(:figure, :axis)}
+
+Create a new `Makie.Figure` and `Makie.Axis`, render pre-resolved PhyloPic
+images at range-relative anchors, and return `(; figure, axis)`.
+
+See [`augment_phylopic_ranges!`](@ref) for rendering keyword documentation.
+"""
+function augment_phylopic_ranges(
+        xstart::AbstractVector{<:Real},
+        xstop::AbstractVector{<:Real},
+        y::AbstractVector{<:Real},
+        images::AbstractVector;
+        figure::_FigureOrAxisSettings = (;),
+        axis::_FigureOrAxisSettings = (;),
+        at::Symbol = :midpoint,
+        glyph_size::Real = 0.4,
+        aspect::Symbol = :preserve,
+        placement::Symbol = :center,
+        xoffset::Real = 0.0,
+        yoffset::Real = 0.0,
+        rotation::Real = 0.0,
+        mirror::Bool = false,
+        on_missing::Symbol = :skip,
+    )::_FigureAxisResult
+    result = _new_figure_axis(figure, axis)
+    augment_phylopic_ranges!(
+        result.axis,
+        xstart,
+        xstop,
+        y,
+        images;
+        at,
+        glyph_size,
+        aspect,
+        placement,
+        xoffset,
+        yoffset,
+        rotation,
+        mirror,
+        on_missing,
+    )
+    return result
 end

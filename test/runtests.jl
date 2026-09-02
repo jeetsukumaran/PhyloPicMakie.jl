@@ -8,6 +8,7 @@
 #   test_render_core.jl      — pre-resolved augment_phylopic!, augment_phylopic_ranges!,
 #                              phylopic_thumbnail_grid! + argument validation
 #   test_makie_integration.jl — reactive resize/relimit integration checks
+#   test_phylopic_db_*.jl  — offline nested-client parsing and request contracts
 #   test_code_quality.jl     — Aqua + JET
 
 using Test
@@ -15,9 +16,13 @@ using CairoMakie
 using PhyloPicMakie
 using Aqua
 using JET
+using HTTP
+using JSON3
 
 # PhyloPicDB is a nested module of PhyloPicMakie and is accessible here.
 const PhyloPicDB = PhyloPicMakie.PhyloPicDB
+
+include("support/phylopic_db_fixtures.jl")
 
 include("test_coordinates.jl")
 include("test_anchored_overlay.jl")
@@ -25,4 +30,12 @@ include("test_label_building.jl")
 include("test_grid_helpers.jl")
 include("test_render_core.jl")
 include("test_makie_integration.jl")
+include("test_phylopic_db_types.jl")
+include("test_phylopic_db_http.jl")
+include("test_phylopic_db_build.jl")
+include("test_phylopic_db_nodes.jl")
+include("test_phylopic_db_images.jl")
+include("test_phylopic_db_resolve.jl")
+include("test_phylopic_db_image_selector.jl")
+include("test_phylopic_db_bulk.jl")
 include("test_code_quality.jl")

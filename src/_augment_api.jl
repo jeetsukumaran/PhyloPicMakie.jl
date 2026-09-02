@@ -6,16 +6,17 @@
 # node UUIDs (strings) or pre-loaded image matrices (glyph), with no
 # dependency on PaleobiologyDB or PBDB taxon names.
 #
-# Also contains _extract_column, a generic table-column extractor shared
-# with PaleobiologyDB.PhyloPicPBDB (which references it as
-# PhyloPicMakie._extract_column).
+# Also contains `_extract_column`, the table-column extractor used by this
+# package's table-oriented entry points.
 #
 # Call graph:
 #
-#   augment_phylopic! / augment_phylopic  (vector API, PhyloPic-native)
-#   augment_phylopic! / augment_phylopic  (table API)
-#   augment_phylopic_ranges! / augment_phylopic_ranges  (range vector API)
-#   augment_phylopic_ranges! / augment_phylopic_ranges  (range table API)
+#   augment_phylopic!                         (axis-mutating vector API)
+#   augment_phylopic                          (figure/axis vector factory)
+#   augment_phylopic! / augment_phylopic      (table APIs)
+#   augment_phylopic_ranges!                  (axis-mutating range vector API)
+#   augment_phylopic_ranges                   (figure/axis range vector factory)
+#   augment_phylopic_ranges! / augment_phylopic_ranges (range table APIs)
 #       └─► _resolve_images_by_uuid(node_uuids, glyph, n; image_rendering)
 #               └─► augment_phylopic!(ax, xs, ys, images; ...)  [_render_core.jl]
 #                       └─► _augment_phylopic_anchored!(...)   [_anchored_overlay.jl]
@@ -95,8 +96,8 @@ Add one PhyloPic silhouette glyph per datum to an existing Makie axis `ax`,
 anchored at positions `(x[i], y[i])` in axis data coordinates.
 
 This is the **PhyloPic-native** public API: image sources are specified as
-PhyloPic node UUIDs (strings).  For PBDB taxon-name resolution use
-`PaleobiologyDB.PhyloPicPBDB.augment_phylopic!` instead.
+PhyloPic node UUIDs (strings). Resolve identifiers from other databases before
+calling this function.
 
 ## Arguments
 
@@ -214,27 +215,32 @@ end
 
 """
     augment_phylopic(
-        ax::Makie.Axis,
         x::AbstractVector{<:Real},
         y::AbstractVector{<:Real};
+        figure = (;),
+        axis = (;),
         kwargs...,
-    ) -> Nothing
+    ) -> NamedTuple{(:figure, :axis)}
 
-Non-mutating alias for [`augment_phylopic!`](@ref).
+Create a new `Makie.Figure` and `Makie.Axis`, add one PhyloPic silhouette per
+datum, and return `(; figure, axis)`.
 
-Semantically identical: adds a glyph layer to an existing axis.  The `!`
-convention is preserved in [`augment_phylopic!`](@ref); this alias is
-provided for naming symmetry.
+Entries in the `figure` and `axis` named tuples or symbol-keyed dictionaries
+are forwarded to the corresponding Makie constructors. Use
+[`augment_phylopic!`](@ref) to add glyphs to an existing axis.
 
 See [`augment_phylopic!`](@ref) for the full keyword-argument documentation.
 """
 function augment_phylopic(
-        ax::Makie.Axis,
         x::AbstractVector{<:Real},
         y::AbstractVector{<:Real};
+        figure::_FigureOrAxisSettings = (;),
+        axis::_FigureOrAxisSettings = (;),
         kwargs...,
-    )::Nothing
-    return augment_phylopic!(ax, x, y; kwargs...)
+    )::_FigureAxisResult
+    result = _new_figure_axis(figure, axis)
+    augment_phylopic!(result.axis, x, y; kwargs...)
+    return result
 end
 
 # ---------------------------------------------------------------------------
@@ -322,25 +328,30 @@ end
 
 """
     augment_phylopic_ranges(
-        ax::Makie.Axis,
         xstart::AbstractVector{<:Real},
         xstop::AbstractVector{<:Real},
         y::AbstractVector{<:Real};
+        figure = (;),
+        axis = (;),
         kwargs...,
-    ) -> Nothing
+    ) -> NamedTuple{(:figure, :axis)}
 
-Non-mutating alias for [`augment_phylopic_ranges!`](@ref).
+Create a new `Makie.Figure` and `Makie.Axis`, add one PhyloPic silhouette per
+range, and return `(; figure, axis)`.
 
 See [`augment_phylopic_ranges!`](@ref) for full documentation.
 """
 function augment_phylopic_ranges(
-        ax::Makie.Axis,
         xstart::AbstractVector{<:Real},
         xstop::AbstractVector{<:Real},
         y::AbstractVector{<:Real};
+        figure::_FigureOrAxisSettings = (;),
+        axis::_FigureOrAxisSettings = (;),
         kwargs...,
-    )::Nothing
-    return augment_phylopic_ranges!(ax, xstart, xstop, y; kwargs...)
+    )::_FigureAxisResult
+    result = _new_figure_axis(figure, axis)
+    augment_phylopic_ranges!(result.axis, xstart, xstop, y; kwargs...)
+    return result
 end
 
 # ---------------------------------------------------------------------------
@@ -414,14 +425,36 @@ function augment_phylopic!(
 end
 
 """
-    augment_phylopic(ax::Makie.Axis, table; kwargs...) -> Nothing
+    augment_phylopic(table; figure = (;), axis = (;), kwargs...)
+        -> NamedTuple{(:figure, :axis)}
 
-Non-mutating alias for the table-based [`augment_phylopic!`](@ref).
+Create a new figure and axis from table columns and return
+`(; figure, axis)`.
 
 See [`augment_phylopic!`](@ref) for full documentation.
 """
-function augment_phylopic(ax::Makie.Axis, table; kwargs...)::Nothing
-    return augment_phylopic!(ax, table; kwargs...)
+function augment_phylopic(
+        table;
+        figure::_FigureOrAxisSettings = (;),
+        axis::_FigureOrAxisSettings = (;),
+        x,
+        y,
+        node_uuid = nothing,
+        glyph::Union{AbstractMatrix, Nothing} = nothing,
+        kwargs...,
+    )::_FigureAxisResult
+    xs = _extract_column(table, x)
+    ys = _extract_column(table, y)
+    uuids = isnothing(node_uuid) ? nothing : _extract_column(table, node_uuid)
+    return augment_phylopic(
+        xs::AbstractVector{<:Real},
+        ys::AbstractVector{<:Real};
+        figure,
+        axis,
+        node_uuid = uuids,
+        glyph,
+        kwargs...,
+    )
 end
 
 # ---------------------------------------------------------------------------
@@ -512,12 +545,39 @@ function augment_phylopic_ranges!(
 end
 
 """
-    augment_phylopic_ranges(ax::Makie.Axis, table; kwargs...) -> Nothing
+    augment_phylopic_ranges(table; figure = (;), axis = (;), kwargs...)
+        -> NamedTuple{(:figure, :axis)}
 
-Non-mutating alias for the table-based [`augment_phylopic_ranges!`](@ref).
+Create a new figure and axis from table range columns and return
+`(; figure, axis)`.
 
 See [`augment_phylopic_ranges!`](@ref) for full documentation.
 """
-function augment_phylopic_ranges(ax::Makie.Axis, table; kwargs...)::Nothing
-    return augment_phylopic_ranges!(ax, table; kwargs...)
+function augment_phylopic_ranges(
+        table;
+        figure::_FigureOrAxisSettings = (;),
+        axis::_FigureOrAxisSettings = (;),
+        xstart,
+        xstop,
+        y,
+        node_uuid = nothing,
+        glyph::Union{AbstractMatrix, Nothing} = nothing,
+        at::Symbol = :start,
+        kwargs...,
+    )::_FigureAxisResult
+    xs = _extract_column(table, xstart)
+    xe = _extract_column(table, xstop)
+    ys = _extract_column(table, y)
+    uuids = isnothing(node_uuid) ? nothing : _extract_column(table, node_uuid)
+    return augment_phylopic_ranges(
+        xs::AbstractVector{<:Real},
+        xe::AbstractVector{<:Real},
+        ys::AbstractVector{<:Real};
+        figure,
+        axis,
+        node_uuid = uuids,
+        glyph,
+        at,
+        kwargs...,
+    )
 end

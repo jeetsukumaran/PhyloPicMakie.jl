@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document governs how LineagesMakie.jl integrates with Makie and Makie-
+This document governs how PhyloPicMakie.jl integrates with Makie and Makie-
 family packages such as CairoMakie and GraphMakie.
 
 Use this document whenever work touches plotting entrypoints, custom blocks,
@@ -29,7 +29,7 @@ contract whenever feasible.
 
 Makie semantics are not optional local style.
 
-When LineagesMakie wraps or extends Makie behavior, it must preserve Makie's
+When PhyloPicMakie wraps or extends Makie behavior, it must preserve Makie's
 host-framework contract unless an explicit, documented divergence is approved.
 
 ### Non-mutating and mutating plotting entrypoints must follow Makie semantics

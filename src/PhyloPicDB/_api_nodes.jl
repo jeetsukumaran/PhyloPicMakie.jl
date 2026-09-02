@@ -8,7 +8,8 @@
 # ---------------------------------------------------------------------------
 
 """
-    fetch_node(uuid; build = nothing) -> Union{PhyloPicNode, Nothing}
+    fetch_node(uuid; build = nothing, request = phylopic_get)
+        -> Union{PhyloPicNode, Nothing}
 
 Fetch a single [`PhyloPicNode`](@ref) by its UUID from the PhyloPic API.
 
@@ -17,6 +18,7 @@ Fetch a single [`PhyloPicNode`](@ref) by its UUID from the PhyloPic API.
 - `uuid`: The PhyloPic node UUID string.
 - `build`: PhyloPic build index.  `nothing` (default) fetches the current
   build automatically via [`ensure_build`](@ref).
+- `request`: callable that accepts a URL and returns an `HTTP.Response`.
 
 # Returns
 
@@ -33,11 +35,12 @@ isnothing(node) || println(node.preferred_name)
 function fetch_node(
         uuid::AbstractString;
         build::Union{Int, Nothing} = nothing,
+        request = phylopic_get,
     )::Union{PhyloPicNode, Nothing}
-    b = ensure_build(build)
+    b = ensure_build(build; request)
     url = "$PHYLOPIC_BASE_URL/nodes/$uuid?build=$b"
     try
-        resp = phylopic_get(url)
+        resp = request(url)
         return _parse_node_json(JSON3.read(resp.body), b)
     catch
         return nothing
@@ -45,7 +48,7 @@ function fetch_node(
 end
 
 """
-    fetch_node_with_primary_image(uuid; build)
+    fetch_node_with_primary_image(uuid; build = nothing, request = phylopic_get)
         -> Tuple{Union{PhyloPicNode, Nothing}, Union{PhyloPicImage, Nothing}}
 
 Fetch a node and its embedded primary image in a single API request.
@@ -58,6 +61,7 @@ primary image or when the image data cannot be parsed.
 
 - `uuid`: The PhyloPic node UUID string.
 - `build`: PhyloPic build index.  `nothing` fetches the current build.
+- `request`: callable that accepts a URL and returns an `HTTP.Response`.
 
 # Returns
 
@@ -77,11 +81,12 @@ end
 function fetch_node_with_primary_image(
         uuid::AbstractString;
         build::Union{Int, Nothing} = nothing,
+        request = phylopic_get,
     )::Tuple{Union{PhyloPicNode, Nothing}, Union{PhyloPicImage, Nothing}}
-    b = ensure_build(build)
+    b = ensure_build(build; request)
     url = "$PHYLOPIC_BASE_URL/nodes/$uuid?build=$b&embed_primaryImage=true"
     try
-        resp = phylopic_get(url)
+        resp = request(url)
         obj = JSON3.read(resp.body)
         node = _parse_node_json(obj, b)
 
