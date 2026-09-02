@@ -40,6 +40,14 @@
     @test image.attribution == "Example artist"
     @test image.specific_node_uuid == "node-1"
 
+    null_attribution_payload = _image_payload()
+    null_attribution_payload["attribution"] = nothing
+    image_without_attribution = PhyloPicDB._parse_image_json(
+        JSON3.read(JSON3.write(null_attribution_payload)),
+        537,
+    )
+    @test ismissing(image_without_attribution.attribution)
+
     named = PhyloPicDB._with_node_name(image, "Canis lupus")
     @test named.node_name == "Canis lupus"
     @test named.uuid == image.uuid

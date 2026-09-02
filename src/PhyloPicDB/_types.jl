@@ -365,7 +365,10 @@ function _parse_image_json(obj, build::Int)::PhyloPicImage
     # attribution may also be at the top level
     attribution = missing
     try
-        attribution = string(obj.attribution)
+        value = obj.attribution
+        if !isnothing(value) && !ismissing(value)
+            attribution = string(value)
+        end
     catch end
 
     return PhyloPicImage(
