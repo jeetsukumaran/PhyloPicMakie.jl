@@ -13,6 +13,10 @@ geometry, child plots, and lifecycle. It performs no network discovery.
 `space` and `glyph_size_space` must both be `:data` or both be `:pixel`.
 Numeric image matrices are normalized to `Matrix{RGBA{N0f8}}` so Makie treats
 them as images rather than signed-distance-field markers.
+
+In data space, glyph anchors participate in axis autolimits while the
+pixel-rendered marker extents do not, matching ordinary Makie scatter markers
+whose marker space is pixel space.
 """
 Makie.@recipe PhyloPicGlyphs (
     positions::AbstractVector,
@@ -198,13 +202,6 @@ function _register_data_space_geometry!(plot::PhyloPicGlyphs)::Nothing
     Makie.register_projected_positions!(
         plot,
         Makie.Point3f;
-        input_name = :glyph_anchor_positions,
-        output_name = :glyph_pixel_positions,
-        output_space = :pixel,
-    )
-    Makie.register_projected_positions!(
-        plot,
-        Makie.Point3f;
         input_name = :glyph_upper_positions,
         output_name = :glyph_upper_pixel_positions,
         output_space = :pixel,
@@ -226,35 +223,6 @@ function _register_data_space_geometry!(plot::PhyloPicGlyphs)::Nothing
                 for (up, lo) in zip(upper, lower)
         ]
     end
-
-    scale_correction = _axis_scale_correction_obs(Makie.get_scene(plot))
-    extent_positions = Makie.lift(
-        plot[:glyph_anchor_positions],
-        plot[:glyph_image_sizes],
-        plot[:glyph_size],
-        plot[:aspect],
-        plot[:placement],
-        scale_correction,
-    ) do positions, image_sizes, glyph_size, aspect, placement, scale
-        return _bbox_corner_positions(
-            positions,
-            image_sizes;
-            glyph_size,
-            aspect,
-            placement,
-            axis_scale_correction = scale,
-        )
-    end
-    Makie.scatter!(
-        plot,
-        extent_positions;
-        color = Makie.RGBAf(0, 0, 0, 0),
-        markersize = 0,
-        strokewidth = 0,
-        visible = plot[:visible],
-        inspectable = false,
-        space = :data,
-    )
     return nothing
 end
 
@@ -272,7 +240,10 @@ function _register_pixel_space_geometry!(plot::PhyloPicGlyphs)::Nothing
     return nothing
 end
 
-function _create_glyph_scatter!(plot::PhyloPicGlyphs)::Makie.Plot
+function _create_glyph_scatter!(
+        plot::PhyloPicGlyphs,
+        space::Symbol,
+    )::Makie.Plot
     Makie.map!(
         plot,
         [:glyph_image_sizes, :glyph_pixel_half_heights, :aspect],
@@ -288,16 +259,31 @@ function _create_glyph_scatter!(plot::PhyloPicGlyphs)::Makie.Plot
         return _pixel_marker_offsets(marker_sizes; placement)
     end
 
-    return Makie.scatter!(
-        plot,
-        plot[:glyph_pixel_positions];
+    glyph_attributes = (
         marker = plot[:glyph_images],
         markersize = plot[:glyph_marker_sizes],
         marker_offset = plot[:glyph_marker_offsets],
         markerspace = :pixel,
-        space = :pixel,
         visible = plot[:visible],
         inspectable = plot[:inspectable],
+    )
+    if space === :data
+        # Keep data anchors in data space and only the rendered marker geometry
+        # in pixel space. Makie then derives axis limits from the anchors, as it
+        # does for ordinary pixel-sized scatter markers, without a projected
+        # limits proxy feeding the current axis limits back into autolimits.
+        return Makie.scatter!(
+            plot,
+            plot[:glyph_anchor_positions];
+            glyph_attributes...,
+            space = :data,
+        )
+    end
+    return Makie.scatter!(
+        plot,
+        plot[:glyph_pixel_positions];
+        glyph_attributes...,
+        space = :pixel,
         transformation = :nothing,
     )
 end
@@ -312,6 +298,6 @@ function Makie.plot!(plot::PhyloPicGlyphs)
     else
         _register_pixel_space_geometry!(plot)
     end
-    _create_glyph_scatter!(plot)
+    _create_glyph_scatter!(plot, space)
     return plot
 end

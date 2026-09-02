@@ -47,7 +47,7 @@ silhouettes to an existing Makie parent and receive the plot handle directly.
 |:--|:--|
 | [Rendering API](api/rendering.md) | Overlay and thumbnail-gallery functions for Makie |
 | [PhyloPicDB](api/phylopic_db.md) | Supported nested namespace for PhyloPic nodes, images, resolution, and batch requests |
-| [Examples](examples.md) | Offline gallery scripts and live-fetch guidance |
+| [Examples](examples.md) | Progressive gallery scripts and live-fetch guidance |
 
 ## Image licensing
 

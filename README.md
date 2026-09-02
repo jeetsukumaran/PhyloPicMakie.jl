@@ -85,8 +85,8 @@ end
   pagination, image selection, and batch requests.
 
 See the [development documentation](https://jeetsukumaran.github.io/PhyloPicMakie.jl/dev/)
-for complete examples and API details. The repository also contains offline
-gallery scripts in [`examples/`](examples/README.md).
+for complete examples and API details. The repository also contains a compact
+beginner-to-advanced gallery in [`examples/`](examples/README.md).
 
 ## Migration from the pre-recipe API
 

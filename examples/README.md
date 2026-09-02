@@ -1,8 +1,9 @@
 # Example gallery
 
 This directory contains a standalone `PhyloPicMakie.jl` gallery environment.
-The required examples use pre-resolved image matrices and focus on the
-package's public Makie interfaces.
+The 4 scripts progress from a minimal overlay to range data, typed taxon
+resolution, and graph composition. They focus on the package's public Makie
+interfaces and use live PhyloPic records.
 
 ## Setup
 
@@ -21,29 +22,26 @@ untracked.
 
 Run any example from the repository root:
 
-- `julia --project=examples examples/src/explicit_overlays.jl`
-- `julia --project=examples examples/src/figure_factories.jl`
-- `julia --project=examples examples/src/thumbnail_gallery.jl`
-- `julia --project=examples examples/src/graph_anchors.jl`
+- `julia --project=examples examples/src/minimal_overlay.jl`
+- `julia --project=examples examples/src/range_overlay.jl`
 - `julia --project=examples examples/src/taxon_discovery.jl`
+- `julia --project=examples examples/src/graph_anchors.jl`
 
 Each script is a direct public example. In an interactive Julia session it
 displays the figure. When run as a script, it saves a PNG in the current
 working directory by default. Pass a custom path as the first argument if you
 want the output somewhere else.
 
-- `explicit_overlays.jl`: public explicit-coordinate and range-anchor overlays.
-- `figure_factories.jl`: figure-creating coordinate and range overlay methods.
-- `thumbnail_gallery.jl`: public thumbnail-grid rendering with grouped labels.
-- `graph_anchors.jl`: a `GraphMakie` node-position snapshot hand-off that
-  materializes `graphplot`, snapshots `p[:node_pos][]`, and forwards those
-  explicit coordinates into `augment_phylopic!`. It does not claim live
-  reactive overlay tracking.
-- `taxon_discovery.jl`: an optional live example that resolves bear names
-  through PhyloPicMakie's built-in discovery layer and renders their primary
-  silhouettes.
+- `minimal_overlay.jl`: a minimal figure-creating call using a taxon query.
+- `range_overlay.jl`: range bars with silhouettes anchored at range midpoints.
+- `taxon_discovery.jl`: typed taxon resolutions rendered as a thumbnail gallery
+  with image license labels.
+- `graph_anchors.jl`: a `GraphMakie` node-position snapshot passed to
+  `augment_phylopic!` for tip silhouettes. The overlay is a snapshot, not live
+  reactive tracking.
 
-## Live fetch examples
+## Network and image licenses
 
-The first four gallery scripts remain deterministic and offline.
-`taxon_discovery.jl` requires network access to PhyloPic.
+All 4 scripts require network access to PhyloPic for taxon queries. Downloaded
+images use the package cache. Each PhyloPic image retains its own license and
+attribution terms; inspect those fields before publishing an output.

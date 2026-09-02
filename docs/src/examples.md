@@ -5,8 +5,15 @@ CurrentModule = PhyloPicMakie
 # Examples
 
 The repository includes a standalone `examples` environment for public Makie
-gallery scripts. The required examples use pre-resolved image matrices and do
-not require network access.
+gallery scripts. The examples form a short progression rather than an
+exhaustive recipe collection.
+
+| Level | Example | Main interface |
+|:--|:--|:--|
+| Beginner | Minimal overlay | `augment_phylopic` |
+| Intermediate | Range overlay | `augment_phylopic_ranges!` |
+| Intermediate | Taxon discovery | `PhyloPicDB.resolve_taxa` and `phylopic_thumbnail_grid` |
+| Advanced | Graph anchors | `GraphMakie.graphplot` and `augment_phylopic!` |
 
 ## Setup
 
@@ -24,28 +31,92 @@ project constraints. The local manifest stays ignored and untracked.
 
 Run these commands from the repository root:
 
-- `julia --project=examples examples/src/explicit_overlays.jl`
-- `julia --project=examples examples/src/figure_factories.jl`
-- `julia --project=examples examples/src/thumbnail_gallery.jl`
-- `julia --project=examples examples/src/graph_anchors.jl`
+- `julia --project=examples examples/src/minimal_overlay.jl`
+- `julia --project=examples examples/src/range_overlay.jl`
 - `julia --project=examples examples/src/taxon_discovery.jl`
+- `julia --project=examples examples/src/graph_anchors.jl`
 
 In an interactive Julia session each script displays the figure. When run as a
 script, each example saves a PNG in the current working directory by default.
 Pass a custom path as the first argument if you want the output somewhere else.
 
-- `explicit_overlays.jl`: public explicit-coordinate and range-anchor overlays.
-- `figure_factories.jl`: figure-creating coordinate and range overlay methods.
-- `thumbnail_gallery.jl`: public thumbnail-grid rendering with grouped labels.
-- `graph_anchors.jl`: a `GraphMakie` node-position snapshot hand-off. The
-  example materializes `graphplot`, snapshots `p[:node_pos][]`, and forwards
-  those explicit coordinates into `augment_phylopic!`; it is not presented as a
-  live reactive overlay example.
-- `taxon_discovery.jl`: a live, built-in taxon-name resolution example that
-  prints typed results and renders bear silhouettes without pre-discovered
-  node UUIDs.
+## Minimal overlay
 
-## Live fetch scope
+Start with the figure-creating function and one taxon query:
 
-The first four scripts remain offline. `taxon_discovery.jl` is an optional
-live example and requires access to the PhyloPic service.
+```julia
+result = augment_phylopic(
+    [0.0],
+    [0.0];
+    taxon = ["Ursus arctos"],
+    glyph_size = 0.45,
+)
+
+figure, axis, plot = result
+```
+
+`result` is a `Makie.FigureAxisPlot`. Its fields provide the new figure, axis,
+and `PhyloPicGlyphs` plot.
+
+## Range overlay
+
+Use the bang function to compose silhouettes with a range plot in an existing
+axis:
+
+```julia
+plot = augment_phylopic_ranges!(
+    axis,
+    minimum_mass,
+    maximum_mass,
+    row;
+    taxon,
+    at = :midpoint,
+    placement = :bottom,
+)
+```
+
+The complete example draws representative body-mass intervals first, then
+anchors one silhouette at each interval midpoint.
+
+## Taxon discovery
+
+Resolve taxon queries explicitly when the result status or selected PhyloPic
+node needs inspection:
+
+```julia
+resolutions = PhyloPicDB.resolve_taxa(taxa)
+figure = phylopic_thumbnail_grid(
+    resolutions;
+    ncols = 2,
+    image_label = [:taxon_name, :license],
+)
+```
+
+The thumbnail gallery accepts the typed taxon resolutions directly. The
+example includes each PhyloPic image's license in its label.
+
+## Graph anchors
+
+GraphMakie exposes the calculated node positions through `graph_plot[:node_pos]`.
+The advanced example snapshots selected tip positions and passes their explicit
+coordinates to the parent-composing function:
+
+```julia
+tip_positions = graph_plot[:node_pos][][tip_indices]
+plot = augment_phylopic!(
+    axis,
+    first.(tip_positions),
+    last.(tip_positions);
+    taxon = tip_taxa,
+)
+```
+
+This handoff is a position snapshot. Moving GraphMakie nodes later does not
+move the silhouettes automatically.
+
+## Network and image licenses
+
+All gallery scripts require access to the PhyloPic service for taxon queries.
+Downloaded images use the package cache. PhyloPic images can use different
+licenses; inspect the `license`, `license_url`, `attribution`, and
+`contributor_href` fields before publishing or redistributing an image.

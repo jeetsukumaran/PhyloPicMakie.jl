@@ -28,6 +28,8 @@ end
     )
     _materialize_integration!(fig)
     glyph_scatter = only(_image_scatter_children(recipe))
+    @test glyph_scatter.space[] === :data
+    @test glyph_scatter.markerspace[] === :pixel
 
     size_1 = only(glyph_scatter.markersize[])
     @test size_1[1] / size_1[2] ≈ 2.0f0 atol = 0.05f0
@@ -60,12 +62,19 @@ end
     )
     _materialize_integration!(fig)
 
-    @test length(recipe.plots) == 2
+    recipe_limits = CairoMakie.Makie.data_limits(recipe)
+    @test recipe_limits.origin[1] ≈ 10.0
+    @test recipe_limits.origin[2] ≈ 0.0
+    @test recipe_limits.widths[1] ≈ 0.0
+    @test recipe_limits.widths[2] ≈ 0.0
+
+    @test length(recipe.plots) == 1
     @test length(ax.scene.plots) == 2
 
     CairoMakie.Makie.autolimits!(ax)
     _materialize_integration!(fig)
     visible_limits = ax.finallimits[]
+    @test visible_limits.widths[1] < 15.0
 
     CairoMakie.Makie.update!(recipe; visible = false)
     _materialize_integration!(fig)
@@ -73,13 +82,13 @@ end
     CairoMakie.Makie.autolimits!(ax)
     _materialize_integration!(fig)
     hidden_limits = ax.finallimits[]
-    @test hidden_limits.widths[1] < visible_limits.widths[1] / 10
+    @test hidden_limits.widths[1] < visible_limits.widths[1] / 4
 
     CairoMakie.Makie.update!(recipe; visible = true)
     CairoMakie.Makie.autolimits!(ax)
     _materialize_integration!(fig)
     restored_limits = ax.finallimits[]
-    @test restored_limits.widths[1] > hidden_limits.widths[1] * 10
+    @test restored_limits ≈ visible_limits
 
     delete!(ax, recipe)
     _materialize_integration!(fig)
@@ -87,7 +96,7 @@ end
     CairoMakie.Makie.autolimits!(ax)
     _materialize_integration!(fig)
     final_limits = ax.finallimits[]
-    @test final_limits.widths[1] < visible_limits.widths[1] / 10
+    @test final_limits ≈ hidden_limits
 end
 
 @testset "PhyloPicMakie - recipe composes under and deletes with a parent plot" begin
@@ -105,7 +114,7 @@ end
     _materialize_integration!(fig)
 
     @test recipe in parent_plot.plots
-    @test length(recipe.plots) == 2
+    @test length(recipe.plots) == 1
 
     delete!(ax, parent_plot)
     _materialize_integration!(fig)
@@ -140,6 +149,8 @@ end
     )
     _materialize_integration!(fig)
     glyph_scatter = only(_image_scatter_children(recipe))
+    @test glyph_scatter.space[] === :pixel
+    @test glyph_scatter.markerspace[] === :pixel
 
     anchor_1 = only(pixel_anchor_positions[])
     pos_1 = only(glyph_scatter.positions[])
